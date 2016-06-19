@@ -112,3 +112,10 @@ SCRANTIC::BaseFile *SCRANTIC::RESFile::getResource(std::string name)
 
     return NULL;
 }
+
+void SCRANTIC::RESFile::resetTTMPositions()
+{
+    for(auto i = std::begin(resourceMap); i != std::end(resourceMap); ++i)
+        if (i->second.filetype == "TTM")
+            static_cast<SCRANTIC::TTMFile *>(i->second.handle)->resetPositions();
+}

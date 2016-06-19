@@ -484,6 +484,8 @@ void SCRANTIC::ScranticPlayer::resetPlayer()
     r_state.currentPalSlot = 0;
 
     r_state.color = std::make_pair(0, 0);
+
+    res->resetTTMPositions();
 }
 
 void SCRANTIC::ScranticPlayer::StartTTMScene()

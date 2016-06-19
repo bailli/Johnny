@@ -1,7 +1,7 @@
 #include "TTMFile.h"
 
 SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
-    : BaseFile(name), currentScene(0), scriptPos(0)
+    : BaseFile(name)
 {
     std::vector<u_int8_t>::iterator it = data.begin();
 
@@ -139,36 +139,57 @@ SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
 
 SCRANTIC::Command SCRANTIC::TTMFile::getNextCommand(u_int16_t scene, bool newScene)
 {
-    std::map<u_int16_t, std::vector<Command> >::iterator it;
-    it = script.find(scene);
+    //BEWARE!
+    //horrible iterator chaos ahead
 
+    size_t pos;
     Command cmd;
 
-    if (it  == script.end())
-    {
-        cmd.opcode = CMD_INTER_NOTFOUND;
-        return cmd;
-    }
+    //std::cerr << filename << ": ---------------- Position map count: " << scriptPositions.size() << std::endl;
 
-    if (!newScene && (scene == currentScene))
+    if (newScene) // new iterator needed
     {
-        ++scriptPos;
-        if (scriptPos >= scriptIterator->second.size())
+        auto it = script.find(scene);
+        if (it  == script.end()) // something is wrong; scene not found
         {
-            Command cmd;
-            cmd.opcode = CMD_INTER_END;
+            cmd.opcode = CMD_INTER_NOTFOUND;
             return cmd;
         }
 
-        return scriptIterator->second[scriptPos];
+        pos = 0; // start form the beginning
+        scriptPositions.insert(std::make_pair(scene, std::make_pair(it, pos))); // save in map
+        return it->second[pos]; //return command
     }
-    else
+
+    // look for existis map entry
+    auto posIt = scriptPositions.find(scene);
+
+    // make sure it exists otherwise error
+    if (posIt == scriptPositions.end())
     {
-        scriptPos = 0;
-        scriptIterator = it;
-        currentScene = scene;
-        return scriptIterator->second[scriptPos];
+        cmd.opcode = CMD_INTER_NOTFOUND;
+        std::cerr << filename << ": tried to access non-existant position-map entry" << std::endl;
+        return cmd;
     }
+
+    //get scriptIterator and position
+    auto scriptIt = posIt->second.first;
+    pos = posIt->second.second;
+    ++pos;
+
+    if (pos >= scriptIt->second.size()) // script at end
+    {
+        Command cmd;
+        cmd.opcode = CMD_INTER_END;
+        scriptPositions.erase(posIt); // delete from postion map
+        return cmd;
+    }
+
+    //update position map
+    posIt->second = std::make_pair(scriptIt, pos);
+
+    // return command
+    return scriptIt->second[pos];
 }
 
 bool SCRANTIC::TTMFile::hasInit()

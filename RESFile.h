@@ -30,6 +30,7 @@ public:
     std::map<u_int8_t, SCRANTIC::resource> resourceMap;
     std::string resFilename;
     std::vector<std::string> ADSFiles;
+    void resetTTMPositions();
     BaseFile *getResource(std::string name);
 };
 
