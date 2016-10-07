@@ -106,14 +106,10 @@ SCRANTIC::BMPFile::BMPFile(std::string name, std::vector<u_int8_t> &data)
 SCRANTIC::BMPFile::~BMPFile()
 {
     for(auto i = std::begin(imageList); i != std::end(imageList); ++i)
-        if (*i != NULL)
-            SDL_FreeSurface(*i);
+        SDL_FreeSurface(*i);
 
-    if (overview != NULL)
-        SDL_FreeSurface(overview);
-
-    if (ovTexture != NULL)
-        SDL_DestroyTexture(ovTexture);
+    SDL_FreeSurface(overview);
+    SDL_DestroyTexture(ovTexture);
 }
 
 SDL_Texture *SCRANTIC::BMPFile::getImage(SDL_Renderer *renderer, u_int16_t num, SDL_Rect &rect)
@@ -173,8 +169,7 @@ void SCRANTIC::BMPFile::createOverview()
         }
     }
 
-    if (overview != NULL)
-        SDL_FreeSurface(overview);
+    SDL_FreeSurface(overview);
 
     imageRect.clear();
 
@@ -257,14 +252,6 @@ void SCRANTIC::BMPFile::setPalette(SDL_Color color[], u_int16_t count)
         return;
 
     SDL_SetPaletteColors(overview->format->palette, color, 0, 256);
-    if (ovTexture != NULL)
-    {
-        /*if (SDL_UpdateTexture(texture, NULL, image->pixels, image->pitch) <  0)
-        {
-            std::cerr << filename << ": Error udpateing SDL_Texture" << std::endl;
-            texture = NULL;
-        }*/
-        SDL_DestroyTexture(ovTexture);
-        ovTexture = NULL;
-    }
+    SDL_DestroyTexture(ovTexture);
+    ovTexture = NULL;
 }

@@ -86,11 +86,8 @@ SCRANTIC::SCRFile::SCRFile(std::string name, std::vector<u_int8_t> &data)
 
 SCRANTIC::SCRFile::~SCRFile()
 {
-    if (texture != NULL)
-        SDL_DestroyTexture(texture);
-
-    if (image != NULL)
-        SDL_FreeSurface(image);
+    SDL_DestroyTexture(texture);
+    SDL_FreeSurface(image);
 }
 
 void SCRANTIC::SCRFile::setPalette(SDL_Color color[], u_int16_t count)
@@ -99,16 +96,8 @@ void SCRANTIC::SCRFile::setPalette(SDL_Color color[], u_int16_t count)
         return;
 
     SDL_SetPaletteColors(image->format->palette, color, 0, 256);
-    if (texture != NULL)
-    {
-        /*if (SDL_UpdateTexture(texture, NULL, image->pixels, image->pitch) <  0)
-        {
-            std::cerr << filename << ": Error udpateing SDL_Texture" << std::endl;
-            texture = NULL;
-        }*/
-        SDL_DestroyTexture(texture);
-        texture = NULL;
-    }
+    SDL_DestroyTexture(texture);
+    texture = NULL;
 }
 
 SDL_Texture *SCRANTIC::SCRFile::getImage(SDL_Renderer *renderer, SDL_Rect &rect)
