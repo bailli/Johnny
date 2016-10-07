@@ -31,6 +31,8 @@ protected:
 public:
     TTMFile(std::string name, std::vector<u_int8_t> &data);
     Command getNextCommand(u_int16_t scene, bool newScene = false);
+    std::vector<Command> getFullScene(u_int16_t num);
+    std::string getTag(u_int16_t num);
     bool hasInit();
 };
 

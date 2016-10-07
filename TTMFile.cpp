@@ -171,6 +171,25 @@ SCRANTIC::Command SCRANTIC::TTMFile::getNextCommand(u_int16_t scene, bool newSce
     }
 }
 
+std::vector<SCRANTIC::Command> SCRANTIC::TTMFile::getFullScene(u_int16_t num)
+{
+    std::map<u_int16_t, std::vector<Command> >::iterator it = script.find(num);
+    if (it == script.end())
+        return std::vector<Command>();
+    else
+        return it->second;
+}
+
+std::string SCRANTIC::TTMFile::getTag(u_int16_t num)
+{
+    std::map<u_int16_t, std::string>::iterator it = tagList.find(num);
+    if (it == tagList.end())
+        return std::string();
+    else
+        return it->second;
+}
+
+
 bool SCRANTIC::TTMFile::hasInit()
 {
     std::map<u_int16_t, std::vector<Command> >::iterator it;
