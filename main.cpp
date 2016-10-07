@@ -4,7 +4,8 @@
 #include "SCRFile.h"
 #include "PALFile.h"
 #include "BMPFile.h"
-#include "ScranticPlayer.h"
+//#include "ScranticPlayer.h"
+#include "ScranticParallelPlayer.h"
 
 #ifdef WIN32
 #include <SDL.h>
@@ -105,13 +106,15 @@ int main()
     }
 
     cout << "Hello Johnny's World!" << endl;
-    SCRANTIC::ScranticPlayer *player = new SCRANTIC::ScranticPlayer("RESOURCE.MAP", "SCRANTIC.SCR");
-
+    //SCRANTIC::ScranticPlayer *player = new SCRANTIC::ScranticPlayer("RESOURCE.MAP", "SCRANTIC.SCR");
+    SCRANTIC::ScranticParallelPlayer *player = new SCRANTIC::ScranticParallelPlayer("RESOURCE.MAP", "SCRANTIC.SCR");
+    cout << "Player created" << endl;
     player->initRenderer(g_Renderer, g_Font);
-
+    cout << "Renderer initialized" << endl;
     player->LoadADS("VISITOR.ADS");
+    cout << "ADS loaded" << endl;
     player->StartADSMovie(3);
-
+    cout << "Movie starts" << endl;
     bool quit;
     SDL_Event e;
     u_int16_t delay;
