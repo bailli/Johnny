@@ -2,7 +2,6 @@
 #define TTMPLAYER_H
 
 #include "TTMFile.h"
-#include "SCRFile.h"
 #include "BMPFile.h"
 #include "RESFile.h"
 
@@ -73,8 +72,10 @@ protected:
 
 public:
     u_int16_t getDelay();
-    SDL_Rect getClipRegion() { return clipRect; }
-    std::string getScreen() { return screen; }
+    SDL_Rect getClipRect() { return clipRect; }
+    SDL_Rect getSaveRect() { return saveRect; }
+    u_int8_t getSample() { return audioSample; }
+    std::string getSCRName() { return screen; }
 
     u_int16_t advanceScript();
 
