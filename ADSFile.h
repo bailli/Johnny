@@ -25,6 +25,7 @@ protected:
     std::map<u_int16_t, std::vector<Command> > script;
     std::map<u_int16_t, std::vector<Command> >::iterator scriptIterator;
     std::map<std::tuple<size_t, u_int16_t, u_int16_t>, size_t> labels;
+    std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> > newLabels;
     size_t scriptPos;
     int32_t currentMovie;
 
@@ -35,6 +36,8 @@ public:
     Command getNextCommand(u_int16_t movie, int32_t ttm = -1, int32_t scene = -1);
     void resetScript() { currentMovie = -1; }
     std::string getResource(u_int16_t num);
+    std::vector<Command> getFullMovie(u_int16_t num);
+    std::map<std::pair<u_int16_t, u_int16_t>, size_t> getMovieLabels(u_int16_t num);
     void skip();
 };
 
