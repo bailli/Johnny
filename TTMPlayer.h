@@ -19,6 +19,7 @@ namespace SCRANTIC {
 #define RENDERITEM_LINE 1
 #define RENDERITEM_RECT 2
 #define RENDERITEM_ELLIPSE 3
+#define RENDERITEM_NONE -1
 
 #define RENDERFLAG_MIRROR 0x1
 
@@ -36,7 +37,7 @@ struct SceneItem
     u_int16_t num;
     u_int8_t flags;
     std::pair<u_int16_t, u_int16_t> color;
-    u_int8_t itemType;
+    int8_t itemType;
 };
 
 class TTMPlayer
@@ -48,6 +49,7 @@ protected:
     std::pair<u_int16_t, u_int16_t> currentColor;
     std::list<SceneItem> items;
     std::list<SceneItem> queuedItems;
+    std::list<SceneItem>::iterator itemPos;
 
     std::string name;
 
@@ -76,6 +78,7 @@ public:
     SDL_Rect getSaveRect() { return saveRect; }
     u_int8_t getSample() { return audioSample; }
     std::string getSCRName() { return screen; }
+    SceneItem getSceneItem(bool reset = false);
 
     u_int16_t advanceScript();
 

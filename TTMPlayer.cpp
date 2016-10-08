@@ -25,6 +25,25 @@ u_int16_t SCRANTIC::TTMPlayer::getDelay()
     return delay;
 }
 
+SCRANTIC::SceneItem SCRANTIC::TTMPlayer::getSceneItem(bool reset)
+{
+    if (reset)
+        itemPos = items.begin();
+
+    SceneItem i;
+
+    if (itemPos == items.end())
+    {
+        i.itemType = RENDERITEM_NONE;
+        return i;
+    }
+
+    i = (*itemPos);
+    ++itemPos;
+
+    return i;
+}
+
 u_int16_t SCRANTIC::TTMPlayer::advanceScript()
 {
     if (scriptPos == script.end())
