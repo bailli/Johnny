@@ -1,8 +1,9 @@
 #include "TTMPlayer.h"
 
-SCRANTIC::TTMPlayer::TTMPlayer(TTMFile *ttm, u_int16_t scene, RESFile *resFile, SDL_Renderer *rendererContext)
+SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t scene, RESFile *resFile, SDL_Renderer *rendererContext)
     : scriptPos(0), delay(20), clipRegion(false), renderer(rendererContext), res(resFile)
-{
+{    
+    TTMFile *ttm = static_cast<TTMFile *>(res->getResource(ttmName));
 
     if (!ttm)
         return;

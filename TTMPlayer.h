@@ -79,7 +79,7 @@ public:
 
     u_int16_t advanceScript();
 
-    TTMPlayer(TTMFile *ttm, u_int16_t scene, RESFile *resFile, SDL_Renderer *rendererContext);
+    TTMPlayer(std::string ttmName, u_int16_t scene, RESFile *resFile, SDL_Renderer *rendererContext);
     ~TTMPlayer();
 };
 
