@@ -1,7 +1,13 @@
 #include "TTMPlayer.h"
 
-SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t scene, RESFile *resFile, SDL_Renderer *rendererContext)
-    : scriptPos(0), delay(20), clipRegion(false), renderer(rendererContext), res(resFile)
+#ifdef WIN32
+#include <SDL2_gfxPrimitives.h>
+#else
+#include <SDL2/SDL2_gfxPrimitives.h>
+#endif
+
+SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
+    : scriptPos(0), delay(20), clipRegion(false), renderer(rendererContext), res(resFile), savedImage(NULL), images(BMPs), palette(pal), alreadySaved(true)
 {    
     TTMFile *ttm = static_cast<TTMFile *>(res->getResource(ttmName));
 
@@ -13,11 +19,25 @@ SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t scene, RESFile *re
         scriptPos = script.begin();
 
     name = ttm->filename + " - " + ttm->getTag(scene);
+
+    sceneNo = scene;
+    resNo = resNum;
+
+    savedImage = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
+    fg = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
+    SDL_SetTextureBlendMode(savedImage, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureBlendMode(fg, SDL_BLENDMODE_BLEND);
+
+    saveRect.x = 0;
+    saveRect.h = 0;
+    saveRect.w = 640;
+    saveRect.h = 480;
 }
 
 SCRANTIC::TTMPlayer::~TTMPlayer()
 {
-
+    SDL_DestroyTexture(savedImage);
+    SDL_DestroyTexture(fg);
 }
 
 u_int16_t SCRANTIC::TTMPlayer::getDelay()
@@ -66,6 +86,7 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
         {
         case CMD_PURGE:
             clipRegion = false;
+            flag |= ttmPurge;
             break;
 
         case CMD_UPDATE:
@@ -114,14 +135,16 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
         case CMD_SAVE_IMAGE_NEW:
             flag |= ttmSaveNew;
         case CMD_SAVE_IMAGE:
+            alreadySaved = false;
             saveRect.x = (int16_t)cmd.data.at(0);
             saveRect.y = (int16_t)cmd.data.at(1);
             saveRect.w = cmd.data.at(2);
             saveRect.h = cmd.data.at(3);
             flag |= ttmSaveImage;
             items.splice(items.end(), queuedItems);
-            //render();
-            stop = true;
+            lastResult = flag;
+            renderForeground();
+            //stop = true;
             break;
 
         case CMD_DRAW_PIXEL:
@@ -168,7 +191,6 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_DRAW_SPRITE_MIRROR:
-            item.flags |= RENDERFLAG_MIRROR;
         case CMD_DRAW_SPRITE:
             if (images[cmd.data.at(3)] != NULL)
             {
@@ -185,6 +207,8 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
                 item.dest.w = item.src.w;
                 item.dest.h = item.src.h;
                 item.flags = 0;
+                if (cmd.opcode == CMD_DRAW_SPRITE_MIRROR)
+                    item.flags |= RENDERFLAG_MIRROR;
                 item.itemType = RENDERITEM_SPRITE;
                 queuedItems.push_back(item);
             }
@@ -226,17 +250,84 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
         }
 
         if (stop)
-        {
-            ++scriptPos;
             break;
-        }
     }
 
     if (scriptPos == script.end())
         return ttmFinished;
 
+    ++scriptPos;
+
     if (clipRegion)
         flag |= ttmClipRegion;
 
+    lastResult = flag;
+
     return flag;
+}
+
+
+void SCRANTIC::TTMPlayer::renderForeground()
+{
+    SDL_SetRenderTarget(renderer, fg);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    Uint32 c1, c2;
+
+    for (auto item = items.begin(); item != items.end(); ++item)
+    {
+        switch ((*item).itemType)
+        {
+        case RENDERITEM_SPRITE:
+            SDL_RenderCopyEx(renderer, (*item).tex, &(*item).src, &(*item).dest, 0, NULL, (SDL_RendererFlip)(*item).flags);
+            break;
+
+        case RENDERITEM_LINE:
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            SDL_RenderDrawLine(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h);
+            break;
+
+        case RENDERITEM_RECT:
+            SDL_SetRenderDrawColor(renderer, palette[(*item).color.first].r, palette[(*item).color.first].g, palette[(*item).color.first].b, 255);
+            SDL_RenderDrawRect(renderer, &(*item).src);
+            SDL_SetRenderDrawColor(renderer, palette[(*item).color.second].r, palette[(*item).color.second].g, palette[(*item).color.second].b, 255);
+            SDL_RenderFillRect(renderer, &(*item).src);
+            break;
+
+        case RENDERITEM_ELLIPSE:
+            c1 = palette[(*item).color.first].r * 0x10000
+                    + palette[(*item).color.first].g * 0x100
+                    + palette[(*item).color.first].b + 0xFF000000;
+            c2 = palette[(*item).color.second].r * 0x10000
+                    + palette[(*item).color.second].g * 0x100
+                    + palette[(*item).color.second].b + 0xFF000000;
+            filledEllipseColor(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h, c2);
+            ellipseColor(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h, c1);
+            break;
+
+        default:
+            std::cerr << "ERROR: Renderer: Unkown render item type!" << std::endl;
+            break;
+        }
+    }
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+    // save foreground rect
+    if (!alreadySaved)
+        if (lastResult & ttmSaveImage)
+        {
+            SDL_SetRenderTarget(renderer, savedImage);
+            //don't know why there is more stuff if this check is compiled...
+            //if (lastResult & ttmSaveNew)
+            {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+                SDL_RenderClear(renderer);
+            }
+            SDL_RenderCopy(renderer, fg, &saveRect, &saveRect);
+            alreadySaved = true;
+        }
+
+    SDL_SetRenderTarget(renderer, fg);
 }

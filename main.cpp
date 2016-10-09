@@ -4,7 +4,8 @@
 #include "SCRFile.h"
 #include "PALFile.h"
 #include "BMPFile.h"
-#include "ScranticPlayer.h"
+//#include "ScranticPlayer.h"
+#include "Robinson.h"
 
 #ifdef WIN32
 #include <SDL.h>
@@ -105,12 +106,22 @@ int main()
     }
 
     cout << "Hello Johnny's World!" << endl;
-    SCRANTIC::ScranticPlayer *player = new SCRANTIC::ScranticPlayer("RESOURCE.MAP", "SCRANTIC.SCR");
+    //SCRANTIC::ScranticPlayer *player = new SCRANTIC::ScranticPlayer("RESOURCE.MAP", "SCRANTIC.SCR");
+    SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson("RESOURCE.MAP", "SCRANTIC.SCR");
+    cout << "Hello Johnny's World!" << endl;
+    //delete crusoe;
+    //cout << "Hello Johnny's World!" << endl;
 
-    player->initRenderer(g_Renderer, g_Font);
+    //player->initRenderer(g_Renderer, g_Font);
+    crusoe->initRenderer(g_Renderer);
+    crusoe->initMenu(g_Font);
 
-    player->LoadADS("VISITOR.ADS");
-    player->StartADSMovie(3);
+    //player->LoadADS("VISITOR.ADS");
+    //player->StartADSMovie(3);
+
+    crusoe->loadMovie("VISITOR.ADS", 3);
+    crusoe->startMovie();
+
 
     bool quit;
     SDL_Event e;
@@ -127,10 +138,13 @@ int main()
 
         if (!waiting)
         {
-            player->AdvanceScript();
-            if (player->isADSMovieFinished())
-                player->displayMenu(true);
-            delay = player->getCurrentDelay();
+            //player->AdvanceScript();
+            crusoe->advanceScripts();
+            /*if (player->isADSMovieFinished())
+                player->displayMenu(true);*/
+            if (!crusoe->isMovieRunning())
+                crusoe->displayMenu(true);
+            delay = crusoe->getCurrentDelay();
             if (delay == 0)
                 delay = 100;
         }
@@ -151,7 +165,8 @@ int main()
         ticks = newTicks;
         waiting = (delay > waitTicks);
         SDL_Delay(waitTicks);
-        player->render();
+        //player->render();
+        crusoe->render();
         SDL_RenderPresent(g_Renderer);
 
 
@@ -164,22 +179,22 @@ int main()
                 if (e.key.keysym.sym == SDLK_SPACE && !e.key.repeat)
                     pause = !pause;
                 else if (e.key.keysym.sym == SDLK_ESCAPE && !e.key.repeat)
-                    if (player->isMenuOpen())
+                    if (crusoe->isMenuOpen())
                     {
-                        player->displayMenu(false);
+                        crusoe->displayMenu(false);
                         pause = false;
                     }
                     else
                         quit = true;
-                else if (!e.key.repeat && player->isMenuOpen())
+                else if (!e.key.repeat && crusoe->isMenuOpen())
                 {
-                    if (player->navigateMenu(e.key.keysym.sym))
+                    if (crusoe->navigateMenu(e.key.keysym.sym))
                         pause = false;
                 }
                 else if (e.key.keysym.sym == SDLK_RETURN && !e.key.repeat)
                 {
                     pause = true;
-                    player->displayMenu(true);
+                    crusoe->displayMenu(true);
                 }
                 break;
             case SDL_QUIT:
@@ -189,7 +204,8 @@ int main()
         }
     }
 
-    delete player;
+    //delete player;
+    delete crusoe;
     cleanup();
 
     return 0;

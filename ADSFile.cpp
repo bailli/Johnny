@@ -106,6 +106,8 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
     movie = 0;
     leftover = 0;
 
+    bool first = true;
+
     while (it != rawScript.end())
     {
         if (!leftover)
@@ -149,6 +151,7 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
                 u_read_le(it, word2);
                 command.data.push_back(word2);
                 labels.insert(std::make_pair(std::make_tuple((size_t)movie, word, word2), script[movie].size()));
+                currentLabels.insert(std::make_pair(std::make_pair(word, word2), script[movie].size()));
                 u_read_le(it, leftover);
             }
             break;
@@ -238,16 +241,26 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
             if (tagIt != tagList.end())
                 command.name = tagIt->second;
 
+            if (first)
+                first = false;
+            else
+            {
+                newLabels.insert(std::make_pair(movie, currentLabels));
+                currentLabels.clear();
+            }
+
             movie = command.opcode;
             command.data.push_back(command.opcode);
             command.opcode = CMD_SET_SCENE;
+
             break;
         }
 
-        newLabels.insert(std::make_pair(movie, currentLabels));
-        currentLabels.clear();
         script[movie].push_back(command);
     }
+
+    newLabels.insert(std::make_pair(movie, currentLabels));
+
 }
 
 
