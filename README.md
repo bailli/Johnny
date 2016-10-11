@@ -8,7 +8,7 @@ Most of the file parsing code is ported from Hans Millings C# project: https://g
 
 ## Status
 
-The current status plays a few scenes perfect and many scenes okay. Scenes, which are supposed to play short clips in parallel, are probably the most important feature which is missing. Combining the individual movies into a smooth story has not been started at all, yet.
+The program plays a few scenes almost perfect and many scenes okay. Some scenes break, because the timing between individual clips is off and of course because of unimplemented commands. Combining the individual movies into a smooth story has not been started at all, yet.
 
 ## Controls
 
@@ -18,7 +18,8 @@ The current status plays a few scenes perfect and many scenes okay. Scenes, whic
 
 ## Compilation
 
-The project depends on SDL2/Mixer/TTF/GFX. The library for the SDL2_gfx is added manually - not by cmake modules.
+This has only been tested on Linux so far, but should work on every system with a C++11 compiler and SDL2. The includes might be incorrect for other environments.
+The project depends on SDL2/Mixer/TTF/GFX. The library for the SDL2_gfx is added manually - not by a cmake modules (see CMakeLists.txt) .
 
 Compile using:
 
