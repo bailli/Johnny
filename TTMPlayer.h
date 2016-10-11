@@ -17,9 +17,6 @@
 
 namespace SCRANTIC {
 
-enum ttmPlayerStatus { ttmError = 0, ttmUpdate = 1, ttmFinished = 2, ttmSaveImage = 4,
-                       ttmSaveNew = 8, ttmClipRegion = 16, ttmPlaySound = 32, ttmLoadScreen = 64, ttmPurge = 128 };
-
 struct SceneItem
 {
     SDL_Texture *tex;
@@ -69,6 +66,7 @@ protected:
 
     BMPFile **images;
     RESFile *res;
+    TTMFile *ttm;
 
     std::string screen;
 

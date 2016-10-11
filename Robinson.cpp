@@ -45,6 +45,7 @@ SCRANTIC::Robinson::~Robinson()
 
     if (res != NULL)
         delete res;
+
     std::cout << "-------------- Goodbye from Robinson Crusoe!--------------" << std::endl;
 }
 
@@ -55,8 +56,8 @@ void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL)
     rendererTarget = SDL_GetRenderTarget(renderer);
 
     // init island
-    islandNight = false;
-    islandLarge = false;
+    islandNight = std::rand() % 2;
+    islandLarge = std::rand() % 2;
     islandPos = NO_ISLAND;
     islandTrunk.x = ISLAND_TEMP_X;
     islandTrunk.y = ISLAND_TEMP_Y;
@@ -322,6 +323,12 @@ void SCRANTIC::Robinson::resetPlayer()
         delete (*it);
 
     ttmScenes.clear();
+
+    islandNight = std::rand() % 2;
+    u_int8_t random = std::rand() % 3;
+    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
+    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
+    islandLarge = std::rand() % 2;
 
     movieRunning = false;
     scrTexture = NULL;
