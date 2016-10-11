@@ -7,7 +7,9 @@
 #endif
 
 SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
-    : scriptPos(0), delay(20), clipRegion(false), renderer(rendererContext), res(resFile), savedImage(NULL), images(BMPs), palette(pal), alreadySaved(true)
+    : resNo(resNum), sceneNo(scene), delay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
+      renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal),
+      saveImage(false), isDone(false), toBeKilled(false), images(BMPs), res(resFile), savedImage(NULL), fg(NULL)
 {    
     TTMFile *ttm = static_cast<TTMFile *>(res->getResource(ttmName));
 
@@ -19,9 +21,6 @@ SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t 
         scriptPos = script.begin();
 
     name = ttm->filename + " - " + ttm->getTag(scene);
-
-    sceneNo = scene;
-    resNo = resNum;
 
     savedImage = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
     fg = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
@@ -45,29 +44,42 @@ u_int16_t SCRANTIC::TTMPlayer::getDelay()
     return delay;
 }
 
-SCRANTIC::SceneItem SCRANTIC::TTMPlayer::getSceneItem(bool reset)
+u_int16_t SCRANTIC::TTMPlayer::getRemainigDelay(u_int32_t ticks)
 {
-    if (reset)
-        itemPos = items.begin();
+    if (ticks < remainingDelay)
+        remainingDelay -= ticks;
+    else
+        remainingDelay = 0;
 
-    SceneItem i;
-
-    if (itemPos == items.end())
-    {
-        i.itemType = RENDERITEM_NONE;
-        return i;
-    }
-
-    i = (*itemPos);
-    ++itemPos;
-
-    return i;
+    return remainingDelay;
 }
 
-u_int16_t SCRANTIC::TTMPlayer::advanceScript()
+void SCRANTIC::TTMPlayer::advanceScript()
 {
+    if (toBeKilled)
+    {
+        isDone = true;
+        return;
+    }
+
+    remainingDelay = delay;
+
+    if (jumpToScript >= 0)
+    {
+        if (jumpToScript == sceneNo)
+            scriptPos = script.begin();
+        else
+            std::cout << "Jump to different sceneNo unimplemented! " << jumpToScript << std::endl;
+
+        jumpToScript = -1;
+    }
+
+
     if (scriptPos == script.end())
-        return ttmFinished;
+    {
+        isDone = true;
+        return;
+    }
 
     Command cmd;
     SceneItem item;
@@ -75,6 +87,10 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
     u_int16_t flag = 0;
 
     bool stop = false;
+    audioSample = -1;
+    saveImage = false;
+    saveNewImage = false;
+    screen = "";
 
     for (; scriptPos != script.end(); ++scriptPos)
     {
@@ -86,17 +102,16 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
         {
         case CMD_PURGE:
             clipRegion = false;
-            flag |= ttmPurge;
             break;
 
         case CMD_UPDATE:
             items.splice(items.end(), queuedItems);
-            flag |= ttmUpdate;
             stop = true;
             break;
 
         case CMD_DELAY:
             delay = cmd.data.at(0) * 20;
+            remainingDelay = delay;
             break;
 
         case CMD_SEL_SLOT_IMG:
@@ -109,6 +124,11 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
 
         case CMD_SET_SCENE:
             std::cout << "TTM Scene: " << cmd.name << std::endl;
+            break;
+
+        case CMD_JMP_SCENE:
+            jumpToScript = cmd.data.at(0);
+            std::cout << "TTM Command: jump to script " << cmd.data.at(0) << std::endl;
             break;
 /*            case CMD_UNK_2020:
 //                if (cmd.data.at(0) == 0x003C)
@@ -133,16 +153,15 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_SAVE_IMAGE_NEW:
-            flag |= ttmSaveNew;
+            saveNewImage = true;
         case CMD_SAVE_IMAGE:
             alreadySaved = false;
+            saveImage = true;
             saveRect.x = (int16_t)cmd.data.at(0);
             saveRect.y = (int16_t)cmd.data.at(1);
             saveRect.w = cmd.data.at(2);
             saveRect.h = cmd.data.at(3);
-            flag |= ttmSaveImage;
             items.splice(items.end(), queuedItems);
-            lastResult = flag;
             renderForeground();
             //stop = true;
             break;
@@ -226,13 +245,13 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
         case CMD_PLAY_SOUND:
             if ((cmd.data.at(0) < 1) || (cmd.data.at(0) > MAX_AUDIO))
                 break;
-            flag |= ttmPlaySound;
+            //flag |= ttmPlaySound;
             audioSample = cmd.data.at(0) - 1;
             break;
 
         case CMD_LOAD_SCREEN:
             screen = cmd.name;
-            flag |= ttmLoadScreen;
+            //flag |= ttmLoadScreen;
             items.clear();
             break;
 
@@ -254,16 +273,15 @@ u_int16_t SCRANTIC::TTMPlayer::advanceScript()
     }
 
     if (scriptPos == script.end())
-        return ttmFinished;
+    {
+        if (jumpToScript == -1)
+            isDone = true;
+        return;
+    }
 
     ++scriptPos;
 
-    if (clipRegion)
-        flag |= ttmClipRegion;
-
-    lastResult = flag;
-
-    return flag;
+    return;
 }
 
 
@@ -316,7 +334,7 @@ void SCRANTIC::TTMPlayer::renderForeground()
 
     // save foreground rect
     if (!alreadySaved)
-        if (lastResult & ttmSaveImage)
+        if (saveImage)
         {
             SDL_SetRenderTarget(renderer, savedImage);
             //don't know why there is more stuff if this check is compiled...
@@ -330,4 +348,14 @@ void SCRANTIC::TTMPlayer::renderForeground()
         }
 
     SDL_SetRenderTarget(renderer, fg);
+}
+
+u_int8_t SCRANTIC::TTMPlayer::needsSave()
+{
+    if (!saveImage)
+        return 0;
+    else if (saveNewImage)
+        return 2;
+    else
+        return 1;
 }

@@ -366,7 +366,7 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd)
     case CMD_UNK_1100: return "Unkown 0x1100" + ret;
     case CMD_SET_SCENE: return "Select Scene" + ret;
     case CMD_UNK_1120: return "Unkown 0x1120" + ret;
-    case CMD_UNK_1200: return "Unkown 0x1200" + ret;
+    case CMD_JMP_SCENE: return "Continue with Scene" + ret;
     case CMD_SET_COLOR: return "Set Color" + ret;
     case CMD_SET_FRAME_1: return "Set Frame 1" + ret;
     case CMD_UNK_2020: return "Unkown 0x2020" + ret;
@@ -399,6 +399,7 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd)
     case CMD_PLAY_MOVIE: return "Play Movie" + ret;
     case CMD_UNK_1520: return "Unkown 0x1520" + ret;
     case CMD_ADD_TTM: return "Add TTM" + ret;
+    //case CMD_KILL_TTM: return "Kill TTM" + ret;
     case CMD_RANDOM_START: return "Random Start" + ret;
     case CMD_RANDOM_UNKNOWN_1: return "Random Unkown" + ret;
     case CMD_RANDOM_END: return "Random End" + ret;

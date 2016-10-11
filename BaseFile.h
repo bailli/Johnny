@@ -25,7 +25,7 @@ namespace SCRANTIC {
 #define CMD_UNK_1100         0x1100 // called 5 times always before 0xA600
 #define CMD_SET_SCENE        0x1110
 #define CMD_UNK_1120         0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image?
-#define CMD_UNK_1200         0x1200 // param very often own scene number - not always
+#define CMD_JMP_SCENE        0x1200 // param very often own scene number - not always
 #define CMD_SET_COLOR        0x2000 // Set Bg/Fg color? (once 0xcf 0xcf - mistake?)
 #define CMD_SET_FRAME_1      0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap
 #define CMD_UNK_2020         0x2020 // called often in "xyz timer"
@@ -62,7 +62,7 @@ namespace SCRANTIC {
 #define CMD_UNK_1520         0x1520 // only called once
                                     // no params; Add TTM follows 2005 0004 0016 0000 0001
 #define CMD_ADD_TTM          0x2005 // $1: res $2: scene $3: ??? $4: repeat --- does no longer force init scene 0
-//      CMD_SET_FRAME_1      0x2010 // play additional TTM?!
+#define CMD_KILL_TTM         0x2010 // kill TTM
 #define CMD_RANDOM_START     0x3010 // add following movies to random list
 #define CMD_RANDOM_UNKNOWN_1 0x3020 // params 5 (with "Set Frame")/2 (once with 1 TTM)/1 (4x with 3 TTM)
 #define CMD_RANDOM_END       0x30FF // rand list end

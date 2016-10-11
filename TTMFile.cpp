@@ -1,7 +1,7 @@
 #include "TTMFile.h"
 
 SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
-    : BaseFile(name), currentScene(0), scriptPos(0)
+    : BaseFile(name)
 {
     std::vector<u_int8_t>::iterator it = data.begin();
 
@@ -137,7 +137,7 @@ SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
     }
 }
 
-SCRANTIC::Command SCRANTIC::TTMFile::getNextCommand(u_int16_t scene, bool newScene)
+/*SCRANTIC::Command SCRANTIC::TTMFile::getNextCommand(u_int16_t scene, bool newScene)
 {
     std::map<u_int16_t, std::vector<Command> >::iterator it;
     it = script.find(scene);
@@ -170,7 +170,7 @@ SCRANTIC::Command SCRANTIC::TTMFile::getNextCommand(u_int16_t scene, bool newSce
         return scriptIterator->second[scriptPos];
     }
 }
-
+*/
 std::vector<SCRANTIC::Command> SCRANTIC::TTMFile::getFullScene(u_int16_t num)
 {
     std::map<u_int16_t, std::vector<Command> >::iterator it = script.find(num);

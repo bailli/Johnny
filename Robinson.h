@@ -63,6 +63,8 @@ protected:
     BMPFile *holidayBMP;
     BMPFile *raftBMP;
 
+    std::list<std::pair<u_int16_t, u_int16_t> > lastTTMs;
+
     // lots of rects...
     SDL_Rect fullRect;
     SDL_Rect oceanRect;
@@ -75,9 +77,12 @@ protected:
 
     BMPFile *images[MAX_IMAGES];
 
+    u_int16_t delay;
     u_int16_t currentMovie;
     u_int16_t queuedMovie;
     size_t queuedPos;
+
+    u_int32_t delayTicks;
 
     void resetPlayer();
 
@@ -108,7 +113,7 @@ public:
     bool loadMovie(std::string adsName, u_int16_t num);
     void startMovie();
 
-    u_int32_t getCurrentDelay() { return 100; }
+    u_int32_t getCurrentDelay() { return delay; }
     void displayMenu(bool show) { renderMenu = show; }
 };
 

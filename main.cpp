@@ -4,7 +4,6 @@
 #include "SCRFile.h"
 #include "PALFile.h"
 #include "BMPFile.h"
-//#include "ScranticPlayer.h"
 #include "Robinson.h"
 
 #ifdef WIN32
@@ -106,18 +105,10 @@ int main()
     }
 
     cout << "Hello Johnny's World!" << endl;
-    //SCRANTIC::ScranticPlayer *player = new SCRANTIC::ScranticPlayer("RESOURCE.MAP", "SCRANTIC.SCR");
     SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson("RESOURCE.MAP", "SCRANTIC.SCR");
-    cout << "Hello Johnny's World!" << endl;
-    //delete crusoe;
-    //cout << "Hello Johnny's World!" << endl;
 
-    //player->initRenderer(g_Renderer, g_Font);
     crusoe->initRenderer(g_Renderer);
     crusoe->initMenu(g_Font);
-
-    //player->LoadADS("VISITOR.ADS");
-    //player->StartADSMovie(3);
 
     crusoe->loadMovie("VISITOR.ADS", 3);
     crusoe->startMovie();
@@ -138,10 +129,7 @@ int main()
 
         if (!waiting)
         {
-            //player->AdvanceScript();
             crusoe->advanceScripts();
-            /*if (player->isADSMovieFinished())
-                player->displayMenu(true);*/
             if (!crusoe->isMovieRunning())
                 crusoe->displayMenu(true);
             delay = crusoe->getCurrentDelay();
@@ -165,10 +153,8 @@ int main()
         ticks = newTicks;
         waiting = (delay > waitTicks);
         SDL_Delay(waitTicks);
-        //player->render();
         crusoe->render();
         SDL_RenderPresent(g_Renderer);
-
 
         while(SDL_PollEvent(&e) != 0)
         {
@@ -204,7 +190,6 @@ int main()
         }
     }
 
-    //delete player;
     delete crusoe;
     cleanup();
 

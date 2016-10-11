@@ -1,7 +1,7 @@
 #include "ADSFile.h"
 
 SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
-    : BaseFile(name), currentMovie(-1)
+    : BaseFile(name)
 {
     std::vector<u_int8_t>::iterator it = data.begin();
 
@@ -136,7 +136,6 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
             u_read_le(it, word2);
             command.data.push_back(word2);
             u_read_le(it, leftover);
-            labels.insert(std::make_pair(std::make_tuple((size_t)movie, word, word2), script[movie].size()));
             currentLabels.insert(std::make_pair(std::make_pair(word, word2), script[movie].size()));
             while (leftover == CMD_OR)
             {
@@ -150,7 +149,6 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
                 command.data.push_back(word);
                 u_read_le(it, word2);
                 command.data.push_back(word2);
-                labels.insert(std::make_pair(std::make_tuple((size_t)movie, word, word2), script[movie].size()));
                 currentLabels.insert(std::make_pair(std::make_pair(word, word2), script[movie].size()));
                 u_read_le(it, leftover);
             }
@@ -245,7 +243,7 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
                 first = false;
             else
             {
-                newLabels.insert(std::make_pair(movie, currentLabels));
+                labels.insert(std::make_pair(movie, currentLabels));
                 currentLabels.clear();
             }
 
@@ -259,53 +257,8 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
         script[movie].push_back(command);
     }
 
-    newLabels.insert(std::make_pair(movie, currentLabels));
+    labels.insert(std::make_pair(movie, currentLabels));
 
-}
-
-
-SCRANTIC::Command SCRANTIC::ADSFile::getNextCommand(u_int16_t movie, int32_t ttm, int32_t scene)
-{
-    std::map<u_int16_t, std::vector<Command> >::iterator it;
-
-    it = script.find(movie);
-    if (it  == script.end())
-    {
-        Command cmd;
-        cmd.opcode = CMD_INTER_NOTFOUND;
-        return cmd;
-    }
-
-    if (movie == currentMovie)
-    {
-        if ((ttm != -1) && (scene != -1))
-        {
-            std::map<std::tuple<size_t, u_int16_t, u_int16_t>, size_t>::iterator labelIt;
-            //std::map<std::pair<u_int16_t, u_int16_t>, size_t> currentLabels(newLabels.at(movie));
-            //auto newIt = currentLabels.find(std::make_pair(ttm, scene));
-            labelIt = labels.find(std::make_tuple((size_t)movie, ttm, scene));
-            if (labelIt != labels.end())
-            //if (newIt != currentLabels.end())
-                scriptPos = labelIt->second;
-        }
-
-        ++scriptPos;
-        if (scriptPos >= scriptIterator->second.size())
-        {
-            Command cmd;
-            cmd.opcode = CMD_INTER_END;
-            return cmd;
-        }
-
-        return scriptIterator->second[scriptPos];
-    }
-    else
-    {
-        scriptPos = 0;
-        currentMovie = movie;
-        scriptIterator = it;
-        return scriptIterator->second[scriptPos];
-    }
 }
 
 std::string SCRANTIC::ADSFile::getResource(u_int16_t num)
@@ -315,16 +268,6 @@ std::string SCRANTIC::ADSFile::getResource(u_int16_t num)
         return "";
     else
         return it->second;
-}
-
-void SCRANTIC::ADSFile::skip()
-{
-    Command cmd;
-    do
-    {
-        cmd = getNextCommand(currentMovie);
-    }
-    while (cmd.opcode != CMD_PLAY_MOVIE);
 }
 
 std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getFullMovie(u_int16_t num)
@@ -338,8 +281,8 @@ std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getFullMovie(u_int16_t num)
 
 std::map<std::pair<u_int16_t, u_int16_t>, size_t> SCRANTIC::ADSFile::getMovieLabels(u_int16_t num)
 {
-    std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> >::iterator it = newLabels.find(num);
-    if (it == newLabels.end())
+    std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> >::iterator it = labels.find(num);
+    if (it == labels.end())
         return std::map<std::pair<u_int16_t, u_int16_t>, size_t>();
     else
         return it->second;

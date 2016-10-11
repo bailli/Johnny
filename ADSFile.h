@@ -23,22 +23,18 @@ protected:
     u_int32_t tagSize;
     u_int16_t tagCount;
     std::map<u_int16_t, std::vector<Command> > script;
-    std::map<u_int16_t, std::vector<Command> >::iterator scriptIterator;
-    std::map<std::tuple<size_t, u_int16_t, u_int16_t>, size_t> labels;
-    std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> > newLabels;
-    size_t scriptPos;
-    int32_t currentMovie;
+    std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> > labels;
 
 public:
     std::map<u_int16_t, std::string> tagList;
 
     ADSFile(std::string name, std::vector<u_int8_t> &data);
-    Command getNextCommand(u_int16_t movie, int32_t ttm = -1, int32_t scene = -1);
-    void resetScript() { currentMovie = -1; }
+    //Command getNextCommand(u_int16_t movie, int32_t ttm = -1, int32_t scene = -1);
+    //void resetScript() { currentMovie = -1; }
     std::string getResource(u_int16_t num);
     std::vector<Command> getFullMovie(u_int16_t num);
     std::map<std::pair<u_int16_t, u_int16_t>, size_t> getMovieLabels(u_int16_t num);
-    void skip();
+    //void skip();
 };
 
 }
