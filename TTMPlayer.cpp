@@ -8,7 +8,7 @@
 
 SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, int16_t repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
     : resNo(resNum), sceneNo(scene), originalScene(scene), repeat(repeatCount), delay(0), remainingDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
-      renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal),
+      renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal), maxTicks(0), selfDestruct(false), selfDestructActive(false),
       saveImage(false), isDone(false), toBeKilled(false), images(BMPs), res(resFile), ttm(NULL),
       savedImage(NULL), fg(NULL)
 {    
@@ -34,7 +34,12 @@ SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t 
     saveRect.h = 480;
 
     if (repeat < 0)
+    {
+        maxTicks = -20*repeat;
         repeat = 0;
+        selfDestructActive = true;
+    }
+
 }
 
 SCRANTIC::TTMPlayer::~TTMPlayer()
@@ -50,6 +55,17 @@ u_int16_t SCRANTIC::TTMPlayer::getDelay()
 
 u_int16_t SCRANTIC::TTMPlayer::getRemainigDelay(u_int32_t ticks)
 {
+    if (selfDestructActive)
+    {
+        maxTicks -= ticks;
+
+        if (maxTicks < 1)
+        {
+            selfDestruct = true;
+            std::cout << "Scene self-destructing! " << sceneNo << std::endl;
+        }
+    }
+
     if (ticks < remainingDelay)
         remainingDelay -= ticks;
     else
@@ -68,7 +84,7 @@ void SCRANTIC::TTMPlayer::advanceScript()
 
     remainingDelay = delay;
 
-    if (jumpToScript >= 0)
+    if ((jumpToScript >= 0) && !selfDestruct)
     {
         if (jumpToScript == sceneNo)
             scriptPos = script.begin();

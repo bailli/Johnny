@@ -51,6 +51,7 @@ protected:
     u_int16_t imgSlot;
     int16_t audioSample;
     int16_t repeat;
+    int16_t maxTicks;
 
     int32_t jumpToScript;
 
@@ -62,6 +63,8 @@ protected:
     bool saveImage;
     bool isDone;
     bool toBeKilled;
+    bool selfDestruct;
+    bool selfDestructActive;
 
     SDL_Rect clipRect;
     SDL_Rect saveRect;
