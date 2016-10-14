@@ -45,6 +45,7 @@ protected:
 
     u_int16_t resNo;
     u_int16_t sceneNo;
+    u_int16_t originalScene;
     u_int16_t delay;
     u_int16_t remainingDelay;
     u_int16_t imgSlot;
@@ -81,7 +82,7 @@ public:
     u_int8_t needsSave();
 
     void kill() { toBeKilled = true; }
-    std::pair<u_int16_t, u_int16_t> getHash() { return std::make_pair(resNo, sceneNo); }
+    std::pair<u_int16_t, u_int16_t> getHash() { return std::make_pair(resNo, originalScene); }
 
     //Needs to be freed
     SDL_Texture *savedImage;
