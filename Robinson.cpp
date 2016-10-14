@@ -582,17 +582,21 @@ void SCRANTIC::Robinson::render()
 void SCRANTIC::Robinson::addTTM(Command cmd)
 {
     u_int16_t sceneNum;
+    int16_t repeat;
     if (cmd.opcode == CMD_ADD_INIT_TTM)
+    {
+        repeat = 0;
         sceneNum = 0;
+    }
     else
     {
         sceneNum = cmd.data.at(1);
+        repeat = cmd.data.at(2);
         if (cmd.data.at(2) != 0)
-            std::cout << name << ": TTM Movie with blob " << (int32_t)cmd.data.at(2) << std::endl;
+            std::cout << name << ": TTM Movie with blob " << (int16_t)cmd.data.at(2) << std::endl;
     }
 
-
-    TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, res, images, palette, renderer);
+    TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
 
     // this assumes the only relavant action in the init scripts
     // is to load a SCR! all other actions are lost

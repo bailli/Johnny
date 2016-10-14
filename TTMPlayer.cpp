@@ -6,8 +6,8 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #endif
 
-SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
-    : resNo(resNum), sceneNo(scene), originalScene(scene), delay(0), remainingDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
+SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, int16_t repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
+    : resNo(resNum), sceneNo(scene), originalScene(scene), repeat(repeatCount), delay(0), remainingDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
       renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal),
       saveImage(false), isDone(false), toBeKilled(false), images(BMPs), res(resFile), ttm(NULL),
       savedImage(NULL), fg(NULL)
@@ -32,6 +32,9 @@ SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t 
     saveRect.h = 0;
     saveRect.w = 640;
     saveRect.h = 480;
+
+    if (repeat < 0)
+        repeat = 0;
 }
 
 SCRANTIC::TTMPlayer::~TTMPlayer()
@@ -87,8 +90,16 @@ void SCRANTIC::TTMPlayer::advanceScript()
 
     if (scriptPos == script.end())
     {
-        isDone = true;
-        return;
+        if (repeat)
+        {
+            --repeat;
+            scriptPos = script.begin();
+        }
+        else
+        {
+            isDone = true;
+            return;
+        }
     }
 
     Command cmd;
@@ -285,9 +296,18 @@ void SCRANTIC::TTMPlayer::advanceScript()
 
     if (scriptPos == script.end())
     {
-        if (jumpToScript == -1)
-            isDone = true;
-        return;
+        if (repeat)
+        {
+            --repeat;
+            scriptPos = script.begin();
+            return;
+        }
+        else
+        {
+            if (jumpToScript == -1)
+                isDone = true;
+            return;
+        }
     }
 
     ++scriptPos;

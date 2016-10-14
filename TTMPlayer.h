@@ -50,6 +50,7 @@ protected:
     u_int16_t remainingDelay;
     u_int16_t imgSlot;
     int16_t audioSample;
+    int16_t repeat;
 
     int32_t jumpToScript;
 
@@ -91,7 +92,7 @@ public:
     void advanceScript();
     void renderForeground();
 
-    TTMPlayer(std::string ttmName, u_int16_t resNo, u_int16_t scene, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
+    TTMPlayer(std::string ttmName, u_int16_t resNo, u_int16_t scene, int16_t repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
     ~TTMPlayer();
 };
 
