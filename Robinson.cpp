@@ -592,6 +592,8 @@ void SCRANTIC::Robinson::addTTM(Command cmd)
     {
         sceneNum = cmd.data.at(1);
         repeat = cmd.data.at(2);
+        if (repeat)
+            --repeat;
         if (cmd.data.at(2) != 0)
             std::cout << name << ": TTM Movie with blob " << (int16_t)cmd.data.at(2) << std::endl;
     }
