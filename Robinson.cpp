@@ -30,6 +30,78 @@ SCRANTIC::Robinson::Robinson(std::string ResMap, std::string ScrExe)
         else if (it->second.filetype == "SCR")
             static_cast<SCRFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
     palette = pal->getPalette();
+
+#ifdef DUMP_ADS
+    std::string adsstring;
+    std::string num;
+    ADSFile *dump;
+    for (size_t i = 0; i < res->ADSFiles.size(); ++i)
+    {
+        adsstring = res->ADSFiles.at(i);
+        dump = static_cast<ADSFile *>(res->getResource(adsstring));
+
+        std::cout << "Filename: " << dump->filename << std::endl;
+
+        for (auto it = dump->tagList.begin(); it != dump->tagList.end(); ++it)
+        {
+            num = SCRANTIC::BaseFile::hex_to_string(it->first, std::dec);
+            for (int j = num.size(); j < 3; ++j)
+                num = " " + num;
+            std::cout << "TAG ID " << num << ": " << it->second << std::endl;
+        }
+        std::cout << std::endl;
+
+        std::string cmdString;
+        std::string ttmName;
+        Command *cmd;
+        TTMFile *ttm;
+        for (auto it = dump->script.begin(); it != dump->script.end(); ++it)
+        {
+            std::cout << "Movie number: " << it->first << " - 0x" << SCRANTIC::BaseFile::hex_to_string(it->first, std::hex) << std::endl;
+            for (size_t pos = 0; pos < it->second.size(); ++pos)
+            {
+                num = SCRANTIC::BaseFile::hex_to_string(pos, std::dec);
+                for (int j = num.size(); j < 3; ++j)
+                    num = " " + num;
+
+                cmdString = SCRANTIC::BaseFile::commandToString(it->second[pos], true);
+                cmd = &(it->second[pos]);
+                switch (cmd->opcode)
+                {
+                case CMD_ADD_INIT_TTM:
+                case CMD_ADD_TTM:
+                case CMD_KILL_TTM:
+                case CMD_UNK_1370:
+                    ttmName = dump->getResource(cmd->data.at(0));
+                    ttm = static_cast<TTMFile *>(res->getResource(ttmName));
+                    //cmdString += "| " + ttmName + " - " + ttm->getTag(cmd->data.at(1));
+                    cmdString += "| " + ttm->getTag(cmd->data.at(1));
+                    break;
+                case CMD_TTM_LABEL:
+                case CMD_SKIP_IF_LAST:
+                    for (size_t j = 0; j < cmd->data.size(); j+=2)
+                    {
+                        ttmName = dump->getResource(cmd->data.at(j));
+                        ttm = static_cast<TTMFile *>(res->getResource(ttmName));
+                        cmdString += "| " + ttm->getTag(cmd->data.at(j+1)) + " ";
+                    }
+                    break;
+
+                }
+
+                std::cout << num << ": " << cmdString << std::endl;
+
+            }
+
+            std::cout << std::endl;
+        }
+
+        std::cout << std::endl;
+        std::cout << std::endl;
+
+    }
+#endif
+
 }
 
 SCRANTIC::Robinson::~Robinson()
@@ -748,7 +820,7 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPl
             break;
 
         default:
-            std::cout << "ADS Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
+            std::cout << "ADS Command: " << SCRANTIC::BaseFile::commandToString(cmd, true) << std::endl;
             break;
         }
     }

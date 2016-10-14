@@ -403,7 +403,7 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads)
         switch (cmd.opcode)
         {
         // ADS instructions
-        case CMD_SET_SCENE: return "New ADS Movieb" + ret;
+        case CMD_SET_SCENE: return "New ADS Movie" + ret;
         case CMD_UNK_1070: return "Unkown 0x1070" + ret;
         case CMD_ADD_INIT_TTM: return "Add Init TTM" + ret;
         case CMD_TTM_LABEL: return "Label" + ret;
