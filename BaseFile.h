@@ -22,9 +22,9 @@ namespace SCRANTIC {
 #define CMD_DELAY            0x1020 // how long is delay 0 ?
 #define CMD_SEL_SLOT_IMG     0x1050
 #define CMD_SEL_SLOT_PAL     0x1060
-#define CMD_UNK_1100         0x1100 // called 5 times always before 0xA600 also SET_SCENE_LABEL
+#define CMD_SET_SCENE_LABEL  0x1100 // called 5 times always before 0xA600 also SET_SCENE_LABEL
 #define CMD_SET_SCENE        0x1110
-#define CMD_SET_SCENE_LABEL  0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image?
+#define CMD_UNK_1120         0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image?
 #define CMD_JMP_SCENE        0x1200 // param very often own scene number - not always
 #define CMD_SET_COLOR        0x2000 // Set Bg/Fg color? (once 0xcf 0xcf - mistake?)
 #define CMD_UNK_2010         0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap -- old define CMD_SET_FRAME_1

@@ -364,9 +364,9 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads)
         case CMD_DELAY: return "Delay" + ret;
         case CMD_SEL_SLOT_IMG: return "Select Image Slot" + ret;
         case CMD_SEL_SLOT_PAL: return "Select Palette Slot" + ret;
-        case CMD_UNK_1100: return "Unkown 0x1100" + ret;
-        case CMD_SET_SCENE: return "New Scene" + ret;
         case CMD_SET_SCENE_LABEL: return "Label Scene" + ret;
+        case CMD_SET_SCENE: return "New Scene" + ret;
+        case CMD_UNK_1120: return "Unkown 0x1120" + ret;
         case CMD_JMP_SCENE: return "Jump to Scene" + ret;
         case CMD_SET_COLOR: return "Set Color" + ret;
         case CMD_UNK_2010: return "Unkown 0x2010" + ret;
