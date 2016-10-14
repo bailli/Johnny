@@ -23,13 +23,13 @@ protected:
     u_int32_t tagSize;
     u_int16_t tagCount;
     std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> > labels;
+    std::map<u_int16_t, std::vector<Command> > script;
+
 #ifdef DUMP_ADS
-public:
-    std::map<u_int16_t, std::vector<Command> > script;
-#else
-    std::map<u_int16_t, std::vector<Command> > script;
-public:
+    friend class Robinson;
 #endif
+
+public:
     std::map<u_int16_t, std::string> tagList;
 
     ADSFile(std::string name, std::vector<u_int8_t> &data);
