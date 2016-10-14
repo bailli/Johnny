@@ -349,8 +349,15 @@ std::vector<u_int8_t> SCRANTIC::BaseFile::LZWDecompress(std::vector<u_int8_t> co
 std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads)
 {
     std::string ret = " ";
+    std::string hex;
+    size_t len = 4;
     for (size_t i = 0; i < cmd.data.size(); ++i)
-        ret += "0x" + hex_to_string(cmd.data.at(i), std::hex) + " ";
+    {
+        hex = hex_to_string(cmd.data.at(i), std::hex);
+        for (size_t j = hex.size(); j < len; ++j)
+            hex = "0" + hex;
+        ret += hex + " ";
+    }
 
     if (cmd.name.length())
         ret += cmd.name;

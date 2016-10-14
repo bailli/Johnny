@@ -143,42 +143,39 @@ SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
 
         script[scene].push_back(command);
     }
-}
 
-/*SCRANTIC::Command SCRANTIC::TTMFile::getNextCommand(u_int16_t scene, bool newScene)
-{
-    std::map<u_int16_t, std::vector<Command> >::iterator it;
-    it = script.find(scene);
+#ifdef DUMP_TTM
+    std::cout << "Filename: " << filename << std::endl;
+    std::string num;
 
-    Command cmd;
-
-    if (it  == script.end())
+    for (auto it = tagList.begin(); it != tagList.end(); ++it)
     {
-        cmd.opcode = CMD_INTER_NOTFOUND;
-        return cmd;
+        num = hex_to_string(it->first, std::dec);
+        for (int j = num.size(); j < 3; ++j)
+            num = " " + num;
+        std::cout << "TAG ID " << num << ": " << it->second << std::endl;
     }
 
-    if (!newScene && (scene == currentScene))
+    std::cout << std::endl;
+
+    for (auto it = script.begin(); it != script.end(); ++it)
     {
-        ++scriptPos;
-        if (scriptPos >= scriptIterator->second.size())
+        std::cout << "Scene number: " << it->first << " - 0x" << hex_to_string(it->first, std::hex) << std::endl;
+
+        for (size_t i = 0; i < it->second.size(); ++i)
         {
-            Command cmd;
-            cmd.opcode = CMD_INTER_END;
-            return cmd;
+            num = hex_to_string(i, std::dec);
+            for (int j = num.size(); j < 3; ++j)
+                num = " " + num;
+            std::cout << num << ": " << SCRANTIC::BaseFile::commandToString(it->second[i]) << std::endl;
         }
-
-        return scriptIterator->second[scriptPos];
+        std::cout << std::endl;
     }
-    else
-    {
-        scriptPos = 0;
-        scriptIterator = it;
-        currentScene = scene;
-        return scriptIterator->second[scriptPos];
-    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+#endif
 }
-*/
+
 std::vector<SCRANTIC::Command> SCRANTIC::TTMFile::getFullScene(u_int16_t num)
 {
     std::map<u_int16_t, std::vector<Command> >::iterator it = script.find(num);
