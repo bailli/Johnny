@@ -107,7 +107,7 @@ SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
         command.data.clear();
         command.name.clear();
 
-        if ((command.opcode == CMD_SET_SCENE) && (length == 1)) // tag
+        if ((command.opcode == CMD_SET_SCENE) || (command.opcode == CMD_SET_SCENE_LABEL))// && (length == 1)) // tag
         {
             u_read_le(it, word);
             command.data.push_back(word);
@@ -130,7 +130,15 @@ SCRANTIC::TTMFile::TTMFile(std::string name, std::vector<u_int8_t> &data)
             }
         }
 
-        if (command.opcode == CMD_SET_SCENE)
+        if (command.opcode == CMD_SET_SCENE_LABEL)
+        {
+            Command c;
+            c.opcode = CMD_JMP_SCENE;
+            c.data.push_back(command.data.at(0));
+            script[scene].push_back(c);
+        }
+
+        if ((command.opcode == CMD_SET_SCENE) || (command.opcode == CMD_SET_SCENE_LABEL))
             scene = command.data.at(0);
 
         script[scene].push_back(command);
