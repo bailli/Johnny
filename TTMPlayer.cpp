@@ -133,6 +133,7 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_SET_SCENE:
+        case CMD_SET_SCENE_LABEL:
             std::cout << "TTM Scene: " << cmd.name << std::endl;
             break;
 

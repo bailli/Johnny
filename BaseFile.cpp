@@ -346,7 +346,7 @@ std::vector<u_int8_t> SCRANTIC::BaseFile::LZWDecompress(std::vector<u_int8_t> co
     return decompressedData;
 }
 
-std::string SCRANTIC::BaseFile::commandToString(Command cmd)
+std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads)
 {
     std::string ret = " ";
     for (size_t i = 0; i < cmd.data.size(); ++i)
@@ -354,58 +354,69 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd)
 
     if (cmd.name.length())
         ret += cmd.name;
-
-    switch (cmd.opcode)
+    if (!ads)
     {
-    case CMD_DRAW_BACKGROUND: return "Draw Background" + ret;
-    case CMD_PURGE: return "Purge" + ret;
-    case CMD_UPDATE: return "Update" + ret;
-    case CMD_DELAY: return "Delay" + ret;
-    case CMD_SEL_SLOT_IMG: return "Select Image Slot" + ret;
-    case CMD_SEL_SLOT_PAL: return "Select Palette Slot" + ret;
-    case CMD_UNK_1100: return "Unkown 0x1100" + ret;
-    case CMD_SET_SCENE: return "Select Scene" + ret;
-    case CMD_UNK_1120: return "Unkown 0x1120" + ret;
-    case CMD_JMP_SCENE: return "Continue with Scene" + ret;
-    case CMD_SET_COLOR: return "Set Color" + ret;
-    case CMD_SET_FRAME_1: return "Set Frame 1" + ret;
-    case CMD_UNK_2020: return "Unkown 0x2020" + ret;
-    case CMD_CLIP_REGION: return "Clip Region" + ret;
-    case CMD_SAVE_IMAGE: return "Save Image" + ret;
-    case CMD_SAVE_IMAGE_NEW: return "Save New Image" + ret;
-    case CMD_DRAW_PIXEL: return "Draw Pixel" + ret;
-    case CMD_UNK_A050: return "Unkown 0xA050" + ret;
-    case CMD_UNK_A060: return "Unkown 0xA060" + ret;
-    case CMD_DRAW_LINE: return "Draw Line" + ret;
-    case CMD_DRAW_RECTANGLE: return "Draw Rectangle" + ret;
-    case CMD_DRAW_ELLIPSE: return "Draw Ellipse" + ret;
-    case CMD_DRAW_SPRITE: return "Draw Sprite (normal)" + ret;
-    case CMD_DRAW_SPRITE_MIRROR: return "Draw Sprite (mirror)" + ret;
-    case CMD_CLEAR_RENDERER: return "Clear Renderer" + ret;
-    case CMD_DRAW_SCREEN: return "Draw Screen" + ret;
-    case CMD_PLAY_SOUND: return "Play Sound" + ret;
-    case CMD_LOAD_SCREEN: return "Load Screen" + ret;
-    case CMD_LOAD_BITMAP: return "Load Bitmap" + ret;
-    case CMD_LOAD_PALETTE: return "Load Palette" + ret;
-
-    // ADS instructions
-    case CMD_UNK_1070: return "Unkown 0x1070" + ret;
-    case CMD_ADD_INIT_TTM: return "Unkown 0x1330" + ret;
-    case CMD_COND_MOVIE: return "Conditional Movie Block" + ret;
-    case CMD_SKIP_IF_LAST: return "Skip Next If Last" + ret;
-    case CMD_UNK_1370: return "Unkown 0x1370" + ret;
-    case CMD_OR_SKIP: return "Or (Skip)" + ret;
-    case CMD_OR: return "Or (Cond)" + ret;
-    case CMD_PLAY_MOVIE: return "Play Movie" + ret;
-    case CMD_UNK_1520: return "Unkown 0x1520" + ret;
-    case CMD_ADD_TTM: return "Add TTM" + ret;
-    //case CMD_KILL_TTM: return "Kill TTM" + ret;
-    case CMD_RANDOM_START: return "Random Start" + ret;
-    case CMD_RANDOM_UNKNOWN_1: return "Random Unkown" + ret;
-    case CMD_RANDOM_END: return "Random End" + ret;
-    case CMD_PLAY_ADS_MOVIE: return "Play ADS Movie" + ret;
-    case CMD_UNK_FFFF: return "Unkown 0xFFFF" + ret;
-
-    default: return "DEFAULT 0x" + hex_to_string(cmd.opcode, std::hex) + ret;
+        switch (cmd.opcode)
+        {
+        case CMD_UNK_0080: return "Unkown 0x0080" + ret;
+        case CMD_PURGE: return "Purge" + ret;
+        case CMD_UPDATE: return "Update" + ret;
+        case CMD_DELAY: return "Delay" + ret;
+        case CMD_SEL_SLOT_IMG: return "Select Image Slot" + ret;
+        case CMD_SEL_SLOT_PAL: return "Select Palette Slot" + ret;
+        case CMD_UNK_1100: return "Unkown 0x1100" + ret;
+        case CMD_SET_SCENE: return "New Scene" + ret;
+        case CMD_SET_SCENE_LABEL: return "Label Scene" + ret;
+        case CMD_JMP_SCENE: return "Jump to Scene" + ret;
+        case CMD_SET_COLOR: return "Set Color" + ret;
+        case CMD_UNK_2010: return "Unkown 0x2010" + ret;
+        case CMD_UNK_2020: return "Unkown 0x2020" + ret;
+        case CMD_CLIP_REGION: return "Clip Region" + ret;
+        case CMD_SAVE_IMAGE: return "Save Image" + ret;
+        case CMD_SAVE_IMAGE_NEW: return "Save New Image" + ret;
+        case CMD_DRAW_PIXEL: return "Draw Pixel" + ret;
+        case CMD_UNK_A050: return "Unkown 0xA050" + ret;
+        case CMD_UNK_A060: return "Unkown 0xA060" + ret;
+        case CMD_DRAW_LINE: return "Draw Line" + ret;
+        case CMD_DRAW_RECTANGLE: return "Draw Rectangle" + ret;
+        case CMD_DRAW_ELLIPSE: return "Draw Ellipse" + ret;
+        case CMD_DRAW_SPRITE: return "Draw Sprite (normal)" + ret;
+        case CMD_DRAW_SPRITE_MIRROR: return "Draw Sprite (mirror)" + ret;
+        case CMD_CLEAR_RENDERER: return "Clear Renderer" + ret;
+        case CMD_UNK_B600: return "Unkown 0xB600" + ret;
+        case CMD_PLAY_SOUND: return "Play Sound" + ret;
+        case CMD_LOAD_SCREEN: return "Load Screen" + ret;
+        case CMD_LOAD_BITMAP: return "Load Bitmap" + ret;
+        case CMD_LOAD_PALETTE: return "Load Palette" + ret;
+        default: return "DEFAULT 0x" + hex_to_string(cmd.opcode, std::hex) + ret;
+        }
     }
+    else
+    {
+        switch (cmd.opcode)
+        {
+        // ADS instructions
+        case CMD_SET_SCENE: return "New ADS Movieb" + ret;
+        case CMD_UNK_1070: return "Unkown 0x1070" + ret;
+        case CMD_ADD_INIT_TTM: return "Add Init TTM" + ret;
+        case CMD_TTM_LABEL: return "Label" + ret;
+        case CMD_SKIP_IF_LAST: return "Skip Next If Last" + ret;
+        case CMD_UNK_1370: return "Unkown 0x1370" + ret;
+        case CMD_OR_SKIP: return "Or (Skip)" + ret;
+        case CMD_OR: return "Or (Cond)" + ret;
+        case CMD_PLAY_MOVIE: return "Play Movie" + ret;
+        case CMD_UNK_1520: return "Unkown 0x1520" + ret;
+        case CMD_ADD_TTM: return "Add TTM" + ret;
+        case CMD_KILL_TTM: return "Kill TTM" + ret;
+        case CMD_RANDOM_START: return "Random Start" + ret;
+        case CMD_UNK_3020: return "Unkown 0x3020" + ret;
+        case CMD_RANDOM_END: return "Random End" + ret;
+        case CMD_UNK_4000: return "Unkown 0x4000" + ret;
+        case CMD_UNK_F010: return "Unkown 0xF010" + ret;
+        case CMD_PLAY_ADS_MOVIE: return "Play ADS Movie" + ret;
+        case CMD_UNK_FFFF: return "Unkown 0xFFFF" + ret;
+
+        default: return "DEFAULT 0x" + hex_to_string(cmd.opcode, std::hex) + ret;
+    }
+}
 }

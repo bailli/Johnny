@@ -16,32 +16,32 @@
 namespace SCRANTIC {
 
 // TTM instructions
-#define CMD_DRAW_BACKGROUND  0x0080 // only after "Select Image Slot" - clear slot?!
+#define CMD_UNK_0080         0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND
 #define CMD_PURGE            0x0110 // still not sure what really gets "purged"
 #define CMD_UPDATE           0x0FF0
 #define CMD_DELAY            0x1020 // how long is delay 0 ?
 #define CMD_SEL_SLOT_IMG     0x1050
 #define CMD_SEL_SLOT_PAL     0x1060
-#define CMD_UNK_1100         0x1100 // called 5 times always before 0xA600
+#define CMD_UNK_1100         0x1100 // called 5 times always before 0xA600 also SET_SCENE_LABEL
 #define CMD_SET_SCENE        0x1110
-#define CMD_UNK_1120         0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image?
+#define CMD_SET_SCENE_LABEL  0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image?
 #define CMD_JMP_SCENE        0x1200 // param very often own scene number - not always
 #define CMD_SET_COLOR        0x2000 // Set Bg/Fg color? (once 0xcf 0xcf - mistake?)
-#define CMD_SET_FRAME_1      0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap
+#define CMD_UNK_2010         0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap -- old define CMD_SET_FRAME_1
 #define CMD_UNK_2020         0x2020 // called often in "xyz timer"
 #define CMD_CLIP_REGION      0x4000 // clip region for sprites ATTENTION x1, y1, x2, y2 - not width/height!
 #define CMD_SAVE_IMAGE       0x4200 // save to last image?
 #define CMD_SAVE_IMAGE_NEW   0x4210 // save to new image
 #define CMD_DRAW_PIXEL       0xA000 // draw pixel at x,y
-#define CMD_UNK_A050         0xA050 // called only once in LILIPUTS ROW ASHORE (2: Unkown 0xA050 00c2 007b 00af 008e)
-#define CMD_UNK_A060         0xA060 // called only once (5: Unkown 0xA060 00c2 007b 00af 008e)
+#define CMD_UNK_A050         0xA050 // called only once in LILIPUTS ROW ASHORE (2: Unkown 0xA050 00c2 007b 00af 008e) freeze part of screen?
+#define CMD_UNK_A060         0xA060 // called only once (5: Unkown 0xA060 00c2 007b 00af 008e) unfreeze screen --- probably wrong
 #define CMD_DRAW_LINE        0xA0A0
 #define CMD_DRAW_RECTANGLE   0xA100 // draw rectangle?! (colors from set frame?!)
 #define CMD_DRAW_ELLIPSE     0xA400
 #define CMD_DRAW_SPRITE      0xA500
 #define CMD_DRAW_SPRITE_MIRROR 0xA520 // mirrored
 #define CMD_CLEAR_RENDERER   0xA600 // param 0/1/2 (count: 6126/673/15) empty sprite list?!
-#define CMD_DRAW_SCREEN      0xB600 // called 6 times params: rect + 0x2 + 0x1 ?!
+#define CMD_UNK_B600         0xB600 // called 6 times params: rect + 0x2 + 0x1 ?! -- old define CMD_DRAW_SCREEN
 #define CMD_PLAY_SOUND       0xC050 // not all sounds used?!
 #define CMD_LOAD_SCREEN      0xF010
 #define CMD_LOAD_BITMAP      0xF020
@@ -52,7 +52,7 @@ namespace SCRANTIC {
                                     // 36: Unkown 0x1070 0004 0005
                                     // 37: Unkown 0x1520
 #define CMD_ADD_INIT_TTM     0x1330 // Init for TTM Res $1 Scene $2 - why is scene needed?
-#define CMD_COND_MOVIE       0x1350 // more like "do while ttm/scene last played"
+#define CMD_TTM_LABEL        0x1350 // more like "do while ttm/scene last played"
                                     // play the following only, but always, after res/scene
 #define CMD_SKIP_IF_LAST     0x1360 // this seems like an actual skip if res/scene was lastplayed
 #define CMD_UNK_1370         0x1370 // 2 Params: TTM and Scene ?
@@ -64,17 +64,13 @@ namespace SCRANTIC {
 #define CMD_ADD_TTM          0x2005 // $1: res $2: scene $3: ??? $4: repeat --- does no longer force init scene 0
 #define CMD_KILL_TTM         0x2010 // kill TTM
 #define CMD_RANDOM_START     0x3010 // add following movies to random list
-#define CMD_RANDOM_UNKNOWN_1 0x3020 // params 5 (with "Set Frame")/2 (once with 1 TTM)/1 (4x with 3 TTM)
+#define CMD_UNK_3020         0x3020 // params 5 (with "Set Frame")/2 (once with 1 TTM)/1 (4x with 3 TTM) -- old define CMD_RANDOM_UNKNOWN_1
 #define CMD_RANDOM_END       0x30FF // rand list end
-// CMD_SET_WINDOW_0     0x4000      // called 4 times - 2x at "end"
-// CMD_LOAD_SCREEN      0xF010      // called 67 times
+#define CMD_UNK_4000         0x4000 // called 4 times - 2x at "end"
+#define CMD_UNK_F010          0xF010 // called 67 times
 #define CMD_PLAY_ADS_MOVIE   0xF200 //  0: Select Scene 0001 MUN. AMB. POS.A  SW
                                     //  1: Unkown 0xF200 000e <-- play movie no. 0x000e ?
-#define CMD_UNK_FFFF         0xFFFF // Part of Command "Load Screen"?
-
-//return values for getNextCommand
-#define CMD_INTER_NOTFOUND   0x0001
-#define CMD_INTER_END        0x0002
+#define CMD_UNK_FFFF         0xFFFF // Part of Command "0xF010?
 
 
 struct Command
@@ -96,7 +92,7 @@ public:
     BaseFile(std::string name);
     ~BaseFile();
     std::string filename;
-    static std::string commandToString(Command cmd);
+    static std::string commandToString(Command cmd, bool ads = false);
 
     static std::string read_string(std::ifstream *in, u_int8_t length = 0);
     static std::string read_string(std::vector<u_int8_t>::iterator &it, u_int8_t length = 0);

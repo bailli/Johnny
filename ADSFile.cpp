@@ -123,14 +123,14 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
 
         switch (command.opcode)
         {
-        case 0x1070:
+        case CMD_UNK_1070:
         case CMD_ADD_INIT_TTM:
             u_read_le(it, word);
             command.data.push_back(word);
             u_read_le(it, word);
             command.data.push_back(word);
             break;
-        case CMD_COND_MOVIE:
+        case CMD_TTM_LABEL:
             u_read_le(it, word);
             command.data.push_back(word);
             u_read_le(it, word2);
@@ -140,7 +140,7 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
             while (leftover == CMD_OR)
             {
                 u_read_le(it, leftover);
-                if (leftover != CMD_COND_MOVIE)
+                if (leftover != CMD_TTM_LABEL)
                 {
                     std::cerr << filename << ": Error processing SKIP command! Next word not skip: "<< leftover << std::endl;
                     break;
@@ -174,17 +174,15 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
                 u_read_le(it, leftover);
             }
             break;
-        case 0x1370:
+        case CMD_UNK_1370:
             u_read_le(it, word);
             command.data.push_back(word);
             u_read_le(it, word);
             command.data.push_back(word);
             break;
-        //case 0x1420:
-        //case 0x1430:
         case CMD_PLAY_MOVIE:
             break;
-        case 0x1520:
+        case CMD_UNK_1520:
             break;
             /*u_read_le(it, word);
             command.data.push_back(word);
@@ -207,7 +205,7 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
             u_read_le(it, word);
             command.data.push_back(word);
             break;
-        case 0x2010:
+        case CMD_KILL_TTM:
             u_read_le(it, word);
             command.data.push_back(word);
             u_read_le(it, word);
@@ -217,19 +215,19 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
             break;
         case CMD_RANDOM_START:
             break;
-        case 0x3020:
+        case CMD_UNK_3020:
             u_read_le(it, word);
             command.data.push_back(word);
             break;
         case CMD_RANDOM_END:
-        case 0x4000:
-        case 0xf010:
+        case CMD_UNK_4000:
+        case CMD_UNK_F010:
             break;
         case CMD_PLAY_ADS_MOVIE:
             u_read_le(it, word);
             command.data.push_back(word);
             break;
-        case 0xffff:
+        case CMD_UNK_FFFF:
             break;
         default:
             if (command.opcode >= 0x100)
