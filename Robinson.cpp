@@ -593,7 +593,7 @@ void SCRANTIC::Robinson::runTTMs()
         {
             ttm->advanceScript();
 
-            newDelay = ttm->getDelay()*20;
+            newDelay = ttm->getDelay();
 
             if (newDelay && (newDelay < delay))
                 delay = newDelay;
