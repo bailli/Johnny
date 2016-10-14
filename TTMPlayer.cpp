@@ -7,7 +7,7 @@
 #endif
 
 SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
-    : resNo(resNum), sceneNo(scene), delay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
+    : resNo(resNum), sceneNo(scene), originalScene(scene), delay(0), remainingDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
       renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal),
       saveImage(false), isDone(false), toBeKilled(false), images(BMPs), res(resFile), ttm(NULL),
       savedImage(NULL), fg(NULL)
@@ -73,6 +73,7 @@ void SCRANTIC::TTMPlayer::advanceScript()
         {
             std::cout << "Jump to different sceneNo! From " << sceneNo << " to Scene " << jumpToScript << std::endl;
             sceneNo = jumpToScript;
+            script.clear();
             script = ttm->getFullScene(sceneNo);
             if (script.size())
                 scriptPos = script.begin();
