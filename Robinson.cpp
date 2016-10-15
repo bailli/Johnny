@@ -121,11 +121,24 @@ SCRANTIC::Robinson::~Robinson()
     std::cout << "-------------- Goodbye from Robinson Crusoe!--------------" << std::endl;
 }
 
+void SCRANTIC::Robinson::displaySplash()
+{
+    //display splash
+    SDL_Rect splashRect;
+    splashRect.x = 0;
+    splashRect.y = 0;
+    SDL_Texture *splash = static_cast<SCRFile *>(res->getResource("INTRO.SCR"))->getImage(renderer, splashRect);
+    SDL_RenderCopy(renderer, splash, &splashRect, &splashRect);
+    SDL_RenderPresent(renderer);
+}
+
 void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL)
 {
     //renderer and target
     renderer = rendererSDL;
     rendererTarget = SDL_GetRenderTarget(renderer);
+
+    displaySplash();
 
     // init island
     islandNight = std::rand() % 2;

@@ -89,6 +89,7 @@ protected:
     void menuRenderer();
     void renderBackgroundAtPos(u_int16_t num, int32_t x, int32_t y, bool raft = false, bool holiday = false);
     void animateBackground();
+    void displaySplash();
 
     bool setPosToLabel(std::pair<u_int16_t, u_int16_t> lastPlayed);
     void addTTM(Command cmd);

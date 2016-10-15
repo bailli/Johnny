@@ -113,7 +113,6 @@ int main()
     crusoe->loadMovie("VISITOR.ADS", 3);
     crusoe->startMovie();
 
-
     bool quit;
     SDL_Event e;
     u_int16_t delay;
