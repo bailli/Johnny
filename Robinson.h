@@ -31,7 +31,7 @@ protected:
     ADSFile *ads;
     std::vector<Command> script;
     size_t scriptPos;
-    std::map<std::pair<u_int16_t, u_int16_t>, size_t> labels;
+    std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> labels;
 
     RIFFPlayer *audioPlayer;
 

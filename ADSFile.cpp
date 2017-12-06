@@ -101,7 +101,7 @@ SCRANTIC::ADSFile::ADSFile(std::string name, std::vector<u_int8_t> &data)
     u_int16_t word, word2, movie, leftover;
     Command command;
     std::map<u_int16_t, std::string>::iterator tagIt;
-    std::map<std::pair<u_int16_t, u_int16_t>, size_t> currentLabels;
+    std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> currentLabels;
 
     movie = 0;
     leftover = 0;
@@ -277,11 +277,11 @@ std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getFullMovie(u_int16_t num)
         return it->second;
 }
 
-std::map<std::pair<u_int16_t, u_int16_t>, size_t> SCRANTIC::ADSFile::getMovieLabels(u_int16_t num)
+std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> SCRANTIC::ADSFile::getMovieLabels(u_int16_t num)
 {
-    std::map<u_int16_t, std::map<std::pair<u_int16_t, u_int16_t>, size_t> >::iterator it = labels.find(num);
+    std::multimap<u_int16_t, std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> >::iterator it = labels.find(num);
     if (it == labels.end())
-        return std::map<std::pair<u_int16_t, u_int16_t>, size_t>();
+        return std::multimap<std::pair<u_int16_t, u_int16_t>, size_t>();
     else
         return it->second;
 }

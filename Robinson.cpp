@@ -671,6 +671,9 @@ bool SCRANTIC::Robinson::setPosToLabel(std::pair<u_int16_t, u_int16_t> lastPlaye
     if (it == labels.end())
         return false;
 
+    if (labels.count(lastPlayed) > 1)
+        std::cout << "==================== multiple ADS Labels" << std::endl;
+
     scriptPos = it->second;
     return true;
 }
