@@ -7,7 +7,7 @@
 #endif
 
 SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, int16_t repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
-    : resNo(resNum), sceneNo(scene), originalScene(scene), repeat(repeatCount), delay(0), remainingDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
+    : resNo(resNum), sceneNo(scene), originalScene(scene), repeat(repeatCount), delay(0), remainingDelay(0), waitCount(0), waitDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
       renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal), maxTicks(0), selfDestruct(false), selfDestructActive(false),
       saveImage(false), isDone(false), toBeKilled(false), images(BMPs), res(resFile), ttm(NULL),
       savedImage(NULL), fg(NULL)
@@ -79,6 +79,13 @@ void SCRANTIC::TTMPlayer::advanceScript()
     if (toBeKilled)
     {
         isDone = true;
+        return;
+    }
+
+    if (waitCount)
+    {
+        remainingDelay = waitDelay/20;
+        waitCount--;
         return;
     }
 
@@ -168,15 +175,11 @@ void SCRANTIC::TTMPlayer::advanceScript()
             jumpToScript = cmd.data.at(0);
             std::cout << "TTM Command: jump to script " << cmd.data.at(0) << std::endl;
             break;
-/*            case CMD_UNK_2020:
-//                if (cmd.data.at(0) == 0x003C)
-            {
-                std::cout << "TTM Command: simple wait timer for " << (int32_t)cmd.data.at(1) << std::endl;
-                SDL_Delay(cmd.data.at(1)*20);
-            }
-//                else
-//                    std::cout << "TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
-            break;*/
+        case CMD_UNK_2020:
+            std::cout << "TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
+            waitCount = cmd.data.at(0);
+            waitDelay = cmd.data.at(1);
+            break;
 
         case CMD_CLIP_REGION:
             clipRect.x = (int16_t)cmd.data.at(0);

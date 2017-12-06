@@ -48,6 +48,8 @@ protected:
     u_int16_t originalScene;
     u_int16_t delay;
     u_int16_t remainingDelay;
+    u_int16_t waitCount;
+    u_int16_t waitDelay;
     u_int16_t imgSlot;
     int16_t audioSample;
     int16_t repeat;
