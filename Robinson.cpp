@@ -611,6 +611,17 @@ void SCRANTIC::Robinson::addTTM(Command cmd)
             std::cout << name << ": TTM Movie with blob " << (int16_t)cmd.data.at(2) << std::endl;
     }
 
+    //check if a TTM matching this hash already exists - if it does do nothing
+    std::pair<u_int16_t, u_int16_t> hash = std::make_pair(cmd.data.at(0), cmd.data.at(1));
+    std::list<TTMPlayer *>::iterator it = ttmScenes.begin();
+    while (it != ttmScenes.end())
+    {
+        if ((*it)->getHash() == hash)
+            return;
+        else
+            ++it;
+    }
+
     TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
 
     // this assumes the only relavant action in the init scripts
