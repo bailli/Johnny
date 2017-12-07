@@ -820,14 +820,14 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPl
 
         case CMD_PLAY_MOVIE:
             labelDone++;
-            //if (labelCount <= labelDone)
+            if (labelCount <= labelDone)
             {
                 runTTMs();
                 return;
             }
-            //else
-//                setPosToLabel(lastPlayed, labelDone);
-//            break;
+            else
+                setPosToLabel(lastPlayed, labelDone);
+            break;
 
         case CMD_ADD_TTM: //TTM Scene ??? Repeat
             if (isRandom)
