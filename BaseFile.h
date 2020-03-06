@@ -5,7 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <vector>
+
+#include "types.h"
 
 #ifdef WIN32
 #include <SDL.h>
@@ -73,89 +74,79 @@ namespace SCRANTIC {
 #define CMD_UNK_FFFF         0xFFFF // Part of Command "0xF010?
 
 
-struct Command
-{
-    u_int16_t opcode;
-    std::vector<u_int16_t> data;
+struct BaseFileExcpetion : public std::exception {
+   const char * what () const throw () {
+      return "Magic string not found!";
+   }
+};
+
+struct Command {
+    u16 opcode;
+    v16 data;
     std::string name;
 };
 
-class BaseFile
-{
+class BaseFile {
 protected:
-    static std::vector<u_int8_t> RLEDecompress(std::vector<u_int8_t> const &compressedData, size_t offset = 0, u_int32_t size = 0);
-    static std::vector<u_int8_t> RLE2Decompress(std::vector<u_int8_t> const &compressedData, size_t offset = 0, u_int32_t size = 0);
-    static std::vector<u_int8_t> LZWDecompress(std::vector<u_int8_t> const &compressedData, size_t offset = 0, u_int32_t size = 0);
+    void assertString(v8::iterator &it, std::string expectedString);
+    SDL_Surface* createSdlSurface(v8 &uncompressedData, u16 width, u16 height, size_t offset = 0);
+
     SDL_Color defaultPalette[256];
 
 public:
-    BaseFile(std::string name);
+    explicit BaseFile(const std::string &name);
     ~BaseFile();
+
     std::string filename;
     static std::string commandToString(Command cmd, bool ads = false);
 
-    static std::string read_string(std::ifstream *in, u_int8_t length = 0);
-    static std::string read_string(std::vector<u_int8_t>::iterator &it, u_int8_t length = 0);
-    static std::string read_const_string(std::ifstream *in, u_int8_t length);
-    static std::string read_const_string(std::vector<u_int8_t>::iterator &it, u_int8_t length);
-    static u_int16_t readBits(std::vector<u_int8_t> const &data, size_t &bytePos, u_int8_t &bitPos, u_int16_t bits);
-    template < typename T > static void u_read_le(std::ifstream *in, T &var);
-    template < typename T > static void u_read_le(std::vector<u_int8_t>::iterator &it, T &var);
-    template < typename T > static std::string hex_to_string(T t, std::ios_base & (*f)(std::ios_base&));
-    static void saveFile(const std::vector<u_int8_t> &data, std::string name, std::string path = "");
-};
+    static std::string readString(std::ifstream *in, u8 length = 0);
+    static std::string readString(v8::iterator &it, u8 length = 0);
+    static std::string readConstString(std::ifstream *in, u8 length);
+    static std::string readConstString(v8::iterator &it, u8 length);
 
+    static void saveFile(const v8 &data, std::string &name, std::string path = "");
+
+    template < typename T > static void readUintLE(std::ifstream *in, T &var);
+    template < typename T > static void readUintLE(v8::iterator &it, T &var);
+    template < typename T > static std::string hexToString(T t, std::ios_base & (*f)(std::ios_base&));
+};
 
 }
 
 template < typename T >
-void SCRANTIC::BaseFile::u_read_le(std::ifstream *in, T &var)
-{
-    if (!in->is_open())
+void SCRANTIC::BaseFile::readUintLE(std::ifstream *in, T &var) {
+    if (!in->is_open()) {
         return;
+    }
 
-    u_int8_t size = sizeof(var);
-    u_int8_t byte;
+    size_t size = sizeof(var);
+    u8 byte;
     var = 0;
 
-    for (u_int8_t i = 0; i < size; ++i)
-    {
+    for (u8 i = 0; i < size; ++i) {
         in->read((char*)&byte, 1);
         var |= (byte << (i * 8));
     }
 }
 
 template < typename T >
-void SCRANTIC::BaseFile::u_read_le(std::vector<u_int8_t>::iterator &it, T &var)
-{
-    u_int8_t size = sizeof(var);
+void SCRANTIC::BaseFile::readUintLE(v8::iterator &it, T &var) {
+    size_t size = sizeof(var);
     var = 0;
 
-    for (u_int8_t i = 0; i < size; ++i)
-    {
+    for (u8 i = 0; i < size; ++i) {
         var |= (*it << (i * 8));
         ++it;
     }
 }
 
 template <class T>
-std::string SCRANTIC::BaseFile::hex_to_string(T t, std::ios_base & (*f)(std::ios_base&))
-{
-  std::ostringstream oss;
-  oss << f << t;
-  return oss.str();
+std::string SCRANTIC::BaseFile::hexToString(T t, std::ios_base & (*f)(std::ios_base&)) {
+    std::ostringstream oss;
+    oss << f << t;
+    return oss.str();
 }
 
 
 #endif // BASEFILE_H
-
-/*#define CMD_SAVE_BACKGROUND  0x0020 // not called
-#define CMD_FADE_OUT         0x4110 // not called
-#define CMD_FADE_IN          0x4120 // not called
-#define CMD_DRAW_SPRITE_1    0xA510 // not called
-#define CMD_DRAW_SPRITE_3    0xA530 // not called
-#define CMD_LOAD_SOUND       0xC020 // not called
-#define CMD_SELECT_SOUND     0xC030 // not called
-#define CMD_DESELECT_SOUND   0xC040 // not called
-#define CMD_STOP_SOUND       0xC060 // not called
-#define CMD_PLAY_MOVIE_2     0x1515 // not called*/

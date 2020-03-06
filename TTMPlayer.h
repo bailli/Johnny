@@ -17,19 +17,18 @@
 
 namespace SCRANTIC {
 
-struct SceneItem
-{
+struct SceneItem {
     SDL_Texture *tex;
     SDL_Rect src;
     SDL_Rect dest;
-    u_int16_t num;
-    u_int8_t flags;
-    std::pair<u_int16_t, u_int16_t> color;
-    int8_t itemType;
+    u16 num;
+    u8 flags;
+    std::pair<u16, u16> color;
+    i8 itemType;
 };
 
-class TTMPlayer
-{
+class TTMPlayer {
+
 protected:
     std::vector<Command> script;
     std::vector<Command>::iterator scriptPos;
@@ -39,23 +38,23 @@ protected:
     std::list<SceneItem>::iterator itemPos;
 
     SDL_Color *palette;
-    std::pair<u_int16_t, u_int16_t> currentColor;
+    std::pair<u16, u16> currentColor;
 
     std::string name;
 
-    u_int16_t resNo;
-    u_int16_t sceneNo;
-    u_int16_t originalScene;
-    u_int16_t delay;
-    u_int16_t remainingDelay;
-    u_int16_t waitCount;
-    u_int16_t waitDelay;
-    u_int16_t imgSlot;
-    int16_t audioSample;
-    int16_t repeat;
-    int16_t maxTicks;
+    u16 resNo;
+    u16 sceneNo;
+    u16 originalScene;
+    u16 delay;
+    u16 remainingDelay;
+    u16 waitCount;
+    u16 waitDelay;
+    u16 imgSlot;
+    i16 audioSample;
+    i16 repeat;
+    i16 maxTicks;
 
-    int32_t jumpToScript;
+    i32 jumpToScript;
 
     SDL_Renderer *renderer;
 
@@ -78,17 +77,17 @@ protected:
     std::string screen;
 
 public:
-    u_int16_t getDelay();
-    u_int16_t getRemainigDelay(u_int32_t ticks);
+    u16 getDelay();
+    u16 getRemainigDelay(u32 ticks);
     SDL_Rect getClipRect() { return clipRect; }
-    int16_t getSample() { int16_t tmp = audioSample; audioSample = -1; return tmp; }
+    i16 getSample() { i16 tmp = audioSample; audioSample = -1; return tmp; }
     std::string getSCRName() { return screen; }
     bool isFinished() { return isDone; }
     bool isClipped() { return clipRegion; }
-    u_int8_t needsSave();
+    u8 needsSave();
 
     void kill() { toBeKilled = true; }
-    std::pair<u_int16_t, u_int16_t> getHash() { return std::make_pair(resNo, originalScene); }
+    std::pair<u16, u16> getHash() { return std::make_pair(resNo, originalScene); }
 
     //Needs to be freed
     SDL_Texture *savedImage;
@@ -97,7 +96,7 @@ public:
     void advanceScript();
     void renderForeground();
 
-    TTMPlayer(std::string ttmName, u_int16_t resNo, u_int16_t scene, int16_t repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
+    TTMPlayer(const std::string &ttmName, u16 resNo, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
     ~TTMPlayer();
 };
 

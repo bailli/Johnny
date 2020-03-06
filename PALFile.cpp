@@ -1,27 +1,18 @@
 #include "PALFile.h"
 
-SCRANTIC::PALFile::PALFile(std::string name, std::vector<u_int8_t> &data) : BaseFile(name)
-{
-    std::vector<u_int8_t>::iterator it = data.begin();
+SCRANTIC::PALFile::PALFile(const std::string &name, v8 &data)
+    : BaseFile(name) {
 
-    std::string tmp = read_const_string(it, 4);
-    if (tmp != "PAL:")
-    {
-        std::cerr << filename << ": \"PAL:\" expected; got " << tmp << std::endl;
-        return;
-    }
+    v8::iterator it = data.begin();
 
-    u_read_le(it, vgaSize);
-    u_read_le(it, magic);
+    assertString(it, "PAL:");
 
-    tmp = read_const_string(it, 4);
-    if (tmp != "VGA:")
-    {
-        std::cerr << filename << ": \"VGA:\" expected; got " << tmp << std::endl;
-        return;
-    }
+    readUintLE(it, vgaSize);
+    readUintLE(it, magic);
 
-    u_read_le(it, palCount);
+    assertString(it, "VGA:");
+
+    readUintLE(it, palCount);
     /*if (palCount > 255)
     {
         std::cerr << filename << ": Palette count too large! " << palCount << std::endl;
@@ -34,9 +25,9 @@ SCRANTIC::PALFile::PALFile(std::string name, std::vector<u_int8_t> &data) : Base
 
     for (u_int32_t i = 0; i < palCount; i++)
     {
-        u_read_le(it, r);
-        u_read_le(it, g);
-        u_read_le(it, b);
+        readUintLE(it, r);
+        readUintLE(it, g);
+        readUintLE(it, b);
         //palette.push_back(std::make_tuple< u_int8_t, u_int8_t, u_int8_t >(r*4, g*4, b*4));
         color.r = r*4;
         color.g = g*4;

@@ -1,0 +1,180 @@
+#include "CompressedBaseFile.h"
+
+#include <sstream>
+
+v8 SCRANTIC::CompressedBaseFile::RLEDecompress(v8 const &compressedData, size_t offset, u32 size) {
+    v8 decompressedData;
+    u8 byte, length;
+
+    while ((offset < compressedData.size()) && ((size == 0) || (decompressedData.size() < size))) {
+        byte = compressedData[offset++];
+        if ((byte & 0x80) == 0x80) {
+            length = (u8)(byte & 0x7F);
+            byte = compressedData[offset++];
+            for (u8 i = 0; i < length; ++i) {
+                decompressedData.push_back(byte);
+            }
+        } else {
+            for (u8 i = 0; i < byte; ++i) {
+                decompressedData.push_back(compressedData[offset++]);
+            }
+        }
+    }
+
+    return decompressedData;
+}
+
+v8 SCRANTIC::CompressedBaseFile::RLE2Decompress(v8 const &compressedData, size_t offset, u32 size) {
+    v8 decompressedData;
+    u8 byte, length;
+
+    while ((offset < compressedData.size()) && ((size == 0) || (decompressedData.size() < size))) {
+        byte = compressedData[offset++];
+        if ((byte & 0x80) == 0x80) {
+            length = compressedData[offset++];
+            for (u8 i = 0; i < length; ++i) {
+                decompressedData.push_back(byte & 0x7F);
+            }
+        } else {
+            for (u8 i = 0; i < byte; ++i) {
+                decompressedData.push_back(compressedData[offset++]);
+            }
+        }
+    }
+
+    return decompressedData;
+}
+
+u16 SCRANTIC::CompressedBaseFile::readBits(v8 const &data, size_t &bytePos, u8 &bitPos, u16 bits) {
+    u16 byte = 0x00;
+    for (u16 i = 0; i < bits; ++i) {
+        if (bytePos >= data.size()) {
+            return byte;
+        }
+
+        byte |= ((data[bytePos] >> bitPos) & 1) << i;
+
+        if (bitPos >= 7) {
+            bitPos = 0;
+            ++bytePos;
+        } else {
+            ++bitPos;
+        }
+    }
+
+    return byte;
+}
+
+v8 SCRANTIC::CompressedBaseFile::LZWDecompress(v8 const &compressedData, size_t offset, u32 size) {
+    v8 decompressedData;
+    std::pair<u16, u8> dictionary[4096];
+    v8 decodeStack;
+
+    u8 bitLength = 9;
+    u16 freeDictPos = 257;
+
+    u16 oldcode, newcode, code;
+    size_t bytePos = offset;
+    u8 bitPos = 0;
+    u8 lastbyte;
+    u32 bitCounter = 0;
+
+    oldcode = readBits(compressedData, bytePos, bitPos, bitLength);
+    lastbyte = oldcode;
+
+    decompressedData.push_back((u8)oldcode);
+
+    while ((bytePos < compressedData.size()-1) && ((size == 0) || (decompressedData.size() < size))) {
+        newcode = readBits(compressedData, bytePos, bitPos, bitLength);
+        bitCounter += bitLength;
+
+        if (newcode == 256) {
+            u16 nskip = ((bitLength*8) - ((bitCounter - 1) % (bitLength*8))) - 1;
+            readBits(compressedData, bytePos, bitPos, nskip);
+            bitLength = 9;
+            freeDictPos = 256;
+            bitCounter = 0;
+            continue;
+        }
+
+        code = newcode;
+        if (code >= freeDictPos) {
+            if (decodeStack.size() >= 4096) {
+                break;
+            }
+            decodeStack.push_back(lastbyte);
+            code = oldcode;
+        }
+
+        while (code >= 256) {
+            if (code > 4095) {
+                break;
+            }
+            decodeStack.push_back(dictionary[code].second);
+            code = dictionary[code].first;
+        }
+
+        decodeStack.push_back((u8)code);
+        lastbyte = (u8)code;
+
+        for (size_t i = decodeStack.size(); i > 0; --i) {
+            decompressedData.push_back(decodeStack[i-1]);
+        }
+        decodeStack.clear();
+
+        if (freeDictPos < 4096) {
+            dictionary[freeDictPos].first = oldcode;
+            dictionary[freeDictPos].second = lastbyte;
+            ++freeDictPos;
+
+            if ((bitLength < 12) && (freeDictPos >= (1 << bitLength))) {
+                ++bitLength;
+                bitCounter = 0;
+            }
+        }
+
+        oldcode = newcode;
+    }
+
+    return decompressedData;
+}
+bool SCRANTIC::CompressedBaseFile::handleDecompression(v8 &data, v8::iterator &it, v8 &uncompressedData) {
+    readUintLE(it, compressedSize);
+    compressedSize -= 5; // substract compressionFlag and uncompressedSize
+    readUintLE(it, compressionFlag);
+    readUintLE(it, uncompressedSize);
+
+    //std::cout << filename << ": Compression flag: " << (i16)compressionFlag << std::endl;
+
+    size_t i = std::distance(data.begin(), it);
+
+    switch (compressionFlag) {
+    case 0x00:
+        uncompressedData = v8(it, (it+uncompressedSize));
+        break;
+    case 0x01:
+        uncompressedData = RLEDecompress(data, i, uncompressedSize);
+        break;
+    case 0x02:
+        uncompressedData = LZWDecompress(data, i, uncompressedSize);
+        break;
+    case 0x03:
+        uncompressedData = RLE2Decompress(data, i, uncompressedSize);
+        break;
+    default:
+        std::cerr << filename << ": unhandled compression type: "
+                  << (i16)compressionFlag << std::endl;
+    }
+
+    if (uncompressedSize != (u32)uncompressedData.size()) {
+        std::cerr << filename << ": decompression error: expected size: "
+                  << (size_t)uncompressedSize  << " - got " << uncompressedData.size()
+                  << " type " << (i16)compressionFlag << std::endl;
+        return false;
+    }
+
+    if (!uncompressedData.size()) {
+        return false;
+    }
+    return true;
+}

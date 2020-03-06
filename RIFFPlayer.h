@@ -8,6 +8,7 @@
 #endif
 
 #include <string>
+#include "types.h"
 
 #define MAX_AUDIO 24
 
@@ -19,9 +20,9 @@ protected:
     Mix_Chunk *audioSamples[MAX_AUDIO];
 
 public:
-    RIFFPlayer(std::string SCRExe);
+    explicit RIFFPlayer(const std::string &SCRExe);
     ~RIFFPlayer();
-    void play(u_int8_t num, bool stopAllOther = true);
+    void play(u8 num, bool stopAllOther = true);
 };
 
 }

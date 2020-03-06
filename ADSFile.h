@@ -1,41 +1,38 @@
 #ifndef ADSFILE_H
 #define ADSFILE_H
 
-#include "BaseFile.h"
+#include "CompressedBaseFile.h"
 #include <map>
 #include <tuple>
 
 namespace SCRANTIC {
 
-class ADSFile : public BaseFile
+class ADSFile : public CompressedBaseFile
 {
 protected:
-    u_int32_t verSize;
+    u32 verSize;
     std::string version;
-    u_int32_t resScrTagSize;
-    u_int32_t resSize;
-    u_int16_t resCount;
-    std::map<u_int16_t, std::string> resList;
-    u_int32_t scrSize;
-    u_int8_t compressionFlag;
-    u_int32_t uncompressedSize;
-    std::vector<u_int8_t> rawScript;
-    u_int32_t tagSize;
-    u_int16_t tagCount;
-    std::map<u_int16_t, std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> > labels;
-    std::map<u_int16_t, std::vector<Command> > script;
+    u32 resScrTagSize;
+    u32 resSize;
+    u16 resCount;
+    std::map<u16, std::string> resList;
+    v8 rawScript;
+    u32 tagSize;
+    u16 tagCount;
+    std::map<u16, std::multimap<std::pair<u16, u16>, size_t> > labels;
+    std::map<u16, std::vector<Command> > script;
 
 #ifdef DUMP_ADS
     friend class Robinson;
 #endif
 
 public:
-    std::map<u_int16_t, std::string> tagList;
+    std::map<u16, std::string> tagList;
 
-    ADSFile(std::string name, std::vector<u_int8_t> &data);
-    std::string getResource(u_int16_t num);
-    std::vector<Command> getFullMovie(u_int16_t num);
-    std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> getMovieLabels(u_int16_t num);
+    ADSFile(const std::string &name, v8 &data);
+    std::string getResource(u16 num);
+    std::vector<Command> getFullMovie(u16 num);
+    std::multimap<std::pair<u16, u16>, size_t> getMovieLabels(u16 num);
 };
 
 }

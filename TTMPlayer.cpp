@@ -6,12 +6,35 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #endif
 
-SCRANTIC::TTMPlayer::TTMPlayer(std::string ttmName, u_int16_t resNum, u_int16_t scene, int16_t repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
-    : resNo(resNum), sceneNo(scene), originalScene(scene), repeat(repeatCount), delay(0), remainingDelay(0), waitCount(0), waitDelay(0), imgSlot(0), audioSample(-1), jumpToScript(-1),
-      renderer(rendererContext), clipRegion(false), alreadySaved(true), saveNewImage(false), palette(pal), maxTicks(0), selfDestruct(false), selfDestructActive(false),
-      saveImage(false), isDone(false), toBeKilled(false), images(BMPs), res(resFile), ttm(NULL),
-      savedImage(NULL), fg(NULL)
-{    
+SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
+    : resNo(resNum),
+      sceneNo(scene),
+      originalScene(scene),
+      repeat(repeatCount),
+      delay(0),
+      remainingDelay(0),
+      waitCount(0),
+      waitDelay(0),
+      imgSlot(0),
+      audioSample(-1),
+      jumpToScript(-1),
+      renderer(rendererContext),
+      clipRegion(false),
+      alreadySaved(true),
+      saveNewImage(false),
+      palette(pal),
+      maxTicks(0),
+      selfDestruct(false),
+      selfDestructActive(false),
+      saveImage(false),
+      isDone(false),
+      toBeKilled(false),
+      images(BMPs),
+      res(resFile),
+      ttm(NULL),
+      savedImage(NULL),
+      fg(NULL) {
+
     ttm = static_cast<TTMFile *>(res->getResource(ttmName));
 
     if (!ttm)
@@ -365,11 +388,11 @@ void SCRANTIC::TTMPlayer::renderForeground()
 
         case RENDERITEM_ELLIPSE:
             c1 = palette[(*item).color.first].r * 0x10000
-                    + palette[(*item).color.first].g * 0x100
-                    + palette[(*item).color.first].b + 0xFF000000;
+                 + palette[(*item).color.first].g * 0x100
+                 + palette[(*item).color.first].b + 0xFF000000;
             c2 = palette[(*item).color.second].r * 0x10000
-                    + palette[(*item).color.second].g * 0x100
-                    + palette[(*item).color.second].b + 0xFF000000;
+                 + palette[(*item).color.second].g * 0x100
+                 + palette[(*item).color.second].b + 0xFF000000;
             filledEllipseColor(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h, c2);
             ellipseColor(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h, c1);
             break;
