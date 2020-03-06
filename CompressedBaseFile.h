@@ -12,6 +12,7 @@ protected:
     u8 compressionFlag;
     u32 uncompressedSize;
 
+    static v8 RLECompress(v8 const &compressedData);
     static v8 RLEDecompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);
     static v8 RLE2Decompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);
     static v8 LZWDecompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);

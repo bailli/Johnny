@@ -2,6 +2,46 @@
 
 #include <sstream>
 
+v8 SCRANTIC::CompressedBaseFile::RLECompress(v8 const &uncompressedData) {
+    v8 compressedData;
+    size_t pos = 0;
+    size_t differenceStart;
+    u8 length = 0;
+    u8 byte;
+
+    while (pos < uncompressedData.size()) {
+        byte = uncompressedData[pos++];
+
+        while ((uncompressedData[pos] == byte)
+                && (length < 0x7E) && (pos < uncompressedData.size())) {
+            length++;
+            pos++;
+        }
+
+        if (length) {
+            compressedData.push_back((length+1) | 0x80);
+            compressedData.push_back(byte);
+            length = 0;
+            continue;
+        }
+
+        differenceStart = pos - 1;
+        while ((uncompressedData[pos] != byte)
+                && (length < 0x7E) && (pos < uncompressedData.size())) {
+            byte = uncompressedData[pos++];
+            length++;
+        }
+
+        compressedData.push_back(length+1);
+        length = 0;
+        for (; differenceStart < pos; ++differenceStart) {
+            compressedData.push_back(uncompressedData[differenceStart]);
+        }
+    }
+
+    return compressedData;
+}
+
 v8 SCRANTIC::CompressedBaseFile::RLEDecompress(v8 const &compressedData, size_t offset, u32 size) {
     v8 decompressedData;
     u8 byte, length;
@@ -154,6 +194,18 @@ bool SCRANTIC::CompressedBaseFile::handleDecompression(v8 &data, v8::iterator &i
         break;
     case 0x01:
         uncompressedData = RLEDecompress(data, i, uncompressedSize);
+//         {   
+//             v8 recompressedData = RLECompress(uncompressedData);
+//             v8 derecompressedData = RLEDecompress(recompressedData, 0, uncompressedSize);
+//             std::cout << filename << ": compression size " << (u32)compressedSize << std::endl;
+//             std::cout << filename << ": recompression size " << recompressedData.size() << std::endl;
+//             for (u32 j = 0; j < uncompressedSize; ++j) {
+//                 if (derecompressedData[j] != uncompressedData[j]) {
+//                     std::cout << filename << ": >>>>>>>>>>>>>>>>>>>>>>>>>> Recompression did not work" << std::endl;
+//                     break;
+//                 }
+//             }
+//         }
         break;
     case 0x02:
         uncompressedData = LZWDecompress(data, i, uncompressedSize);
