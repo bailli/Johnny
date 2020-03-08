@@ -37,27 +37,25 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
 
     ttm = static_cast<TTMFile *>(res->getResource(ttmName));
 
-    if (!ttm)
+    if (!ttm) {
         return;
+    }
 
     script = ttm->getFullScene(scene);
-    if (script.size())
+    if (script.size()) {
         scriptPos = script.begin();
+    }
 
     name = ttm->filename + " - " + ttm->getTag(scene);
 
-    savedImage = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
-    fg = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 640, 480);
+    savedImage = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
+    fg = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_SetTextureBlendMode(savedImage, SDL_BLENDMODE_BLEND);
     SDL_SetTextureBlendMode(fg, SDL_BLENDMODE_BLEND);
 
-    saveRect.x = 0;
-    saveRect.h = 0;
-    saveRect.w = 640;
-    saveRect.h = 480;
+    saveRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-    if (repeat < 0)
-    {
+    if (repeat < 0) {
         maxTicks = -20*repeat;
         repeat = 0;
         selfDestructActive = true;
@@ -65,67 +63,59 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
 
 }
 
-SCRANTIC::TTMPlayer::~TTMPlayer()
-{
+SCRANTIC::TTMPlayer::~TTMPlayer() {
     SDL_DestroyTexture(savedImage);
     SDL_DestroyTexture(fg);
 }
 
-u_int16_t SCRANTIC::TTMPlayer::getDelay()
-{
+u16 SCRANTIC::TTMPlayer::getDelay() {
     return delay;
 }
 
-u_int16_t SCRANTIC::TTMPlayer::getRemainigDelay(u_int32_t ticks)
-{
-    if (selfDestructActive)
-    {
+u16 SCRANTIC::TTMPlayer::getRemainigDelay(u32 ticks) {
+    if (selfDestructActive) {
         maxTicks -= ticks;
 
-        if (maxTicks < 1)
-        {
+        if (maxTicks < 1) {
             selfDestruct = true;
             std::cout << "Scene self-destructing! " << sceneNo << std::endl;
         }
     }
 
-    if (ticks < remainingDelay)
+    if (ticks < remainingDelay) {
         remainingDelay -= ticks;
-    else
+    } else {
         remainingDelay = 0;
+    }
 
     return remainingDelay;
 }
 
-void SCRANTIC::TTMPlayer::advanceScript()
-{
-    if (toBeKilled)
-    {
+void SCRANTIC::TTMPlayer::advanceScript() {
+    if (toBeKilled) {
         isDone = true;
         return;
     }
 
-    if (waitCount)
-    {
-        remainingDelay = waitDelay/20;
+    if (waitCount) {
+        remainingDelay = waitDelay/DELAY_MS;
         waitCount--;
         return;
     }
 
     remainingDelay = delay;
 
-    if ((jumpToScript >= 0) && !selfDestruct)
-    {
-        if (jumpToScript == sceneNo)
+    if ((jumpToScript >= 0) && !selfDestruct) {
+        if (jumpToScript == sceneNo) {
             scriptPos = script.begin();
-        else
-        {
+        } else {
             std::cout << "Jump to different sceneNo! From " << sceneNo << " to Scene " << jumpToScript << std::endl;
             sceneNo = jumpToScript;
             script.clear();
             script = ttm->getFullScene(sceneNo);
-            if (script.size())
+            if (script.size()) {
                 scriptPos = script.begin();
+            }
 
             name = ttm->filename + " - " + ttm->getTag(sceneNo);
         }
@@ -134,15 +124,11 @@ void SCRANTIC::TTMPlayer::advanceScript()
     }
 
 
-    if (scriptPos == script.end())
-    {
-        if (repeat)
-        {
+    if (scriptPos == script.end()) {
+        if (repeat) {
             --repeat;
             scriptPos = script.begin();
-        }
-        else
-        {
+        } else {
             isDone = true;
             return;
         }
@@ -151,7 +137,7 @@ void SCRANTIC::TTMPlayer::advanceScript()
     Command cmd;
     SceneItem item;
 
-    u_int16_t flag = 0;
+    //u16 flag = 0;
 
     bool stop = false;
     audioSample = -1;
@@ -159,14 +145,12 @@ void SCRANTIC::TTMPlayer::advanceScript()
     saveNewImage = false;
     screen = "";
 
-    for (; scriptPos != script.end(); ++scriptPos)
-    {
+    for (; scriptPos != script.end(); ++scriptPos) {
         cmd = (*scriptPos);
 
         //std::cout << "TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
 
-        switch (cmd.opcode)
-        {
+        switch (cmd.opcode) {
         case CMD_PURGE:
             clipRegion = false;
             break;
@@ -177,7 +161,7 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_DELAY:
-            delay = cmd.data.at(0) * 20;
+            delay = cmd.data.at(0) * DELAY_MS;
             remainingDelay = delay;
             break;
 
@@ -198,6 +182,7 @@ void SCRANTIC::TTMPlayer::advanceScript()
             jumpToScript = cmd.data.at(0);
             std::cout << "TTM Command: jump to script " << cmd.data.at(0) << std::endl;
             break;
+
         case CMD_UNK_2020:
             std::cout << "TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
             waitCount = cmd.data.at(0);
@@ -205,14 +190,16 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_CLIP_REGION:
-            clipRect.x = (int16_t)cmd.data.at(0);
-            clipRect.y = (int16_t)cmd.data.at(1);
+            clipRect.x = (i16)cmd.data.at(0);
+            clipRect.y = (i16)cmd.data.at(1);
             clipRect.w = cmd.data.at(2) - clipRect.x;
             clipRect.h = cmd.data.at(3) - clipRect.y;
-            if (clipRect.x + clipRect.w >= 640)
-                clipRect.w = 640 - clipRect.x;
-            if (clipRect.y + clipRect.h >= 480)
-                clipRect.h = 480 - clipRect.y;
+            if (clipRect.x + clipRect.w >= SCREEN_WIDTH) {
+                clipRect.w = SCREEN_WIDTH - clipRect.x;
+            }
+            if (clipRect.y + clipRect.h >= SCREEN_HEIGHT) {
+                clipRect.h = SCREEN_HEIGHT - clipRect.y;
+            }
             clipRegion = true;
             break;
 
@@ -221,8 +208,8 @@ void SCRANTIC::TTMPlayer::advanceScript()
         case CMD_SAVE_IMAGE:
             alreadySaved = false;
             saveImage = true;
-            saveRect.x = (int16_t)cmd.data.at(0);
-            saveRect.y = (int16_t)cmd.data.at(1);
+            saveRect.x = (i16)cmd.data.at(0);
+            saveRect.y = (i16)cmd.data.at(1);
             saveRect.w = cmd.data.at(2);
             saveRect.h = cmd.data.at(3);
             items.splice(items.end(), queuedItems);
@@ -231,8 +218,8 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_DRAW_PIXEL:
-            item.src.x = (int16_t)cmd.data.at(0);
-            item.src.y = (int16_t)cmd.data.at(1);
+            item.src.x = (i16)cmd.data.at(0);
+            item.src.y = (i16)cmd.data.at(1);
             item.src.w = 2;
             item.src.h = 2;
             item.color = currentColor;
@@ -241,10 +228,10 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_DRAW_LINE:
-            item.src.x = (int16_t)cmd.data.at(0);
-            item.src.y = (int16_t)cmd.data.at(1);
-            item.src.w = (int16_t)cmd.data.at(2);
-            item.src.h = (int16_t)cmd.data.at(3);
+            item.src.x = (i16)cmd.data.at(0);
+            item.src.y = (i16)cmd.data.at(1);
+            item.src.w = (i16)cmd.data.at(2);
+            item.src.h = (i16)cmd.data.at(3);
             item.color = currentColor;
             item.itemType = RENDERITEM_LINE;
             queuedItems.push_back(item);
@@ -255,8 +242,8 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_DRAW_RECTANGLE:
-            item.src.x = (int16_t)cmd.data.at(0);
-            item.src.y = (int16_t)cmd.data.at(1);
+            item.src.x = (i16)cmd.data.at(0);
+            item.src.y = (i16)cmd.data.at(1);
             item.src.w = cmd.data.at(2);
             item.src.h = cmd.data.at(3);
             item.color = currentColor;
@@ -266,8 +253,8 @@ void SCRANTIC::TTMPlayer::advanceScript()
         case CMD_DRAW_ELLIPSE:
             item.src.w = cmd.data.at(2)/2;
             item.src.h = cmd.data.at(3)/2;
-            item.src.x = (int16_t)cmd.data.at(0) + item.src.w;
-            item.src.y = (int16_t)cmd.data.at(1) + item.src.h;
+            item.src.x = (i16)cmd.data.at(0) + item.src.w;
+            item.src.y = (i16)cmd.data.at(1) + item.src.h;
             item.color = currentColor;
             item.itemType = RENDERITEM_ELLIPSE;
             queuedItems.push_back(item);
@@ -275,14 +262,12 @@ void SCRANTIC::TTMPlayer::advanceScript()
 
         case CMD_DRAW_SPRITE_MIRROR:
         case CMD_DRAW_SPRITE:
-            if (images[cmd.data.at(3)] != NULL)
-            {
-                item.dest.x = (int16_t)cmd.data.at(0);
-                item.dest.y = (int16_t)cmd.data.at(1);
+            if (images[cmd.data.at(3)] != NULL) {
+                item.dest.x = (i16)cmd.data.at(0);
+                item.dest.y = (i16)cmd.data.at(1);
                 item.num = cmd.data.at(2);
                 item.tex = images[cmd.data.at(3)]->getImage(renderer, item.num, item.src);
-                if (item.tex == NULL)
-                {
+                if (item.tex == NULL) {
                     std::cerr << name << ": Error tried to access non existing sprite number!" << std::endl;
                     std::cout << ">>> TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
                     break;
@@ -290,13 +275,12 @@ void SCRANTIC::TTMPlayer::advanceScript()
                 item.dest.w = item.src.w;
                 item.dest.h = item.src.h;
                 item.flags = 0;
-                if (cmd.opcode == CMD_DRAW_SPRITE_MIRROR)
+                if (cmd.opcode == CMD_DRAW_SPRITE_MIRROR) {
                     item.flags |= RENDERFLAG_MIRROR;
+                }
                 item.itemType = RENDERITEM_SPRITE;
                 queuedItems.push_back(item);
-            }
-            else
-            {
+            } else {
                 std::cerr << name << ": Error tried to access unloaded image slot!" << std::endl;
                 std::cout << ">>> TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
             }
@@ -307,8 +291,9 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
 
         case CMD_PLAY_SOUND:
-            if ((cmd.data.at(0) < 1) || (cmd.data.at(0) > MAX_AUDIO))
+            if ((cmd.data.at(0) < 1) || (cmd.data.at(0) > MAX_AUDIO)) {
                 break;
+            }
             //flag |= ttmPlaySound;
             audioSample = cmd.data.at(0) - 1;
             break;
@@ -332,22 +317,20 @@ void SCRANTIC::TTMPlayer::advanceScript()
             break;
         }
 
-        if (stop)
+        if (stop) {
             break;
+        }
     }
 
-    if (scriptPos == script.end())
-    {
-        if (repeat)
-        {
+    if (scriptPos == script.end()) {
+        if (repeat) {
             --repeat;
             scriptPos = script.begin();
             return;
-        }
-        else
-        {
-            if (jumpToScript == -1)
+        } else {
+            if (jumpToScript == -1) {
                 isDone = true;
+            }
             return;
         }
     }
@@ -358,18 +341,15 @@ void SCRANTIC::TTMPlayer::advanceScript()
 }
 
 
-void SCRANTIC::TTMPlayer::renderForeground()
-{
+void SCRANTIC::TTMPlayer::renderForeground() {
     SDL_SetRenderTarget(renderer, fg);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
     Uint32 c1, c2;
 
-    for (auto item = items.begin(); item != items.end(); ++item)
-    {
-        switch ((*item).itemType)
-        {
+    for (auto item = items.begin(); item != items.end(); ++item) {
+        switch ((*item).itemType) {
         case RENDERITEM_SPRITE:
             SDL_RenderCopyEx(renderer, (*item).tex, &(*item).src, &(*item).dest, 0, NULL, (SDL_RendererFlip)(*item).flags);
             break;
@@ -406,29 +386,28 @@ void SCRANTIC::TTMPlayer::renderForeground()
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
     // save foreground rect
-    if (!alreadySaved)
-        if (saveImage)
-        {
+    if (!alreadySaved) {
+        if (saveImage) {
             SDL_SetRenderTarget(renderer, savedImage);
             //don't know why there is more stuff if this check is compiled...
-            //if (lastResult & ttmSaveNew)
-            {
+            //if (lastResult & ttmSaveNew) {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
                 SDL_RenderClear(renderer);
-            }
+            //}
             SDL_RenderCopy(renderer, fg, &saveRect, &saveRect);
             alreadySaved = true;
         }
+    }
 
     SDL_SetRenderTarget(renderer, fg);
 }
 
-u_int8_t SCRANTIC::TTMPlayer::needsSave()
-{
-    if (!saveImage)
+u8 SCRANTIC::TTMPlayer::needsSave() {
+    if (!saveImage) {
         return 0;
-    else if (saveNewImage)
+    } else if (saveNewImage) {
         return 2;
-    else
+    } else {
         return 1;
+    }
 }

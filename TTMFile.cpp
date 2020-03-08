@@ -1,9 +1,9 @@
 #include "TTMFile.h"
 
-SCRANTIC::TTMFile::TTMFile(const std::string &name, std::vector<u_int8_t> &data)
+SCRANTIC::TTMFile::TTMFile(const std::string &name, v8 &data)
     : CompressedBaseFile(name) {
 
-    std::vector<u_int8_t>::iterator it = data.begin();
+    v8::iterator it = data.begin();
 
     assertString(it, "VER:");
 
@@ -42,7 +42,7 @@ SCRANTIC::TTMFile::TTMFile(const std::string &name, std::vector<u_int8_t> &data)
     for (u16 i = 0; i < tagCount; ++i) {
         readUintLE(it, id);
         desc = readString(it);
-        tagList.insert(std::pair<u_int16_t, std::string>(id, desc));
+        tagList.insert(std::pair<u16, std::string>(id, desc));
     }
 
     if (!rawScript.size()) {

@@ -15,7 +15,7 @@ protected:
     static v8 RLECompress(v8 const &compressedData);
     static v8 RLEDecompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);
     static v8 RLE2Decompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);
-    static v8 LZWDecompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);
+    static v8 LZCDecompress(v8 const &compressedData, size_t offset = 0, u32 size = 0);
     static u16 readBits(v8 const &data, size_t &bytePos, u8 &bitPos, u16 bits);
     bool handleDecompression(v8 &data, v8::iterator &it, v8 &uncompressedData);
 

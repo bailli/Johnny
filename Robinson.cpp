@@ -11,11 +11,35 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #endif
 
-SCRANTIC::Robinson::Robinson(std::string ResMap, std::string ScrExe)
-    : res(NULL), audioPlayer(NULL), renderMenu(false), renderer(NULL),
-      movieRunning(false), animationCycle(0), islandPos(NO_ISLAND), ads(NULL),
-      queuedMovie(0), currentMovie(0), delay(0), delayTicks(0)
-{
+SCRANTIC::Robinson::Robinson(const std::string &ResMap, const std::string &ScrExe)
+    : res(NULL),
+      audioPlayer(NULL),
+      renderMenu(false),
+      renderer(NULL),
+      movieRunning(false),
+      animationCycle(0),
+      islandPos(NO_ISLAND),
+      ads(NULL),
+      queuedMovie(0),
+      currentMovie(0),
+      delay(0),
+      delayTicks(0),
+      currentMenuPos(0),
+      scriptPos(0),
+      rendererTarget(NULL),
+      islandNight(false),
+      islandLarge(false),
+      bgTexture(NULL),
+      fgTexture(NULL),
+      saveTexture(NULL),
+      oceanTexture(NULL),
+      oceanNightTexture(NULL),
+      scrTexture(NULL),
+      backgroundBMP(NULL),
+      holidayBMP(NULL),
+      raftBMP(NULL),
+      queuedPos(0) {
+
     std::cout << "--------------- Hello from Robinson Crusoe!---------------" << std::endl;
 
     res = new RESFile(ResMap);
@@ -24,29 +48,30 @@ SCRANTIC::Robinson::Robinson(std::string ResMap, std::string ScrExe)
     std::srand(std::time(0));
 
     PALFile *pal = static_cast<PALFile *>(res->getResource("JOHNCAST.PAL"));
-    for (auto it = res->resourceMap.begin(); it != res->resourceMap.end(); ++it)
-        if (it->second.filetype == "BMP")
+    for (auto it = res->resourceMap.begin(); it != res->resourceMap.end(); ++it) {
+        if (it->second.filetype == "BMP") {
             static_cast<BMPFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
-        else if (it->second.filetype == "SCR")
+        } else if (it->second.filetype == "SCR") {
             static_cast<SCRFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
+        }
+    }
     palette = pal->getPalette();
 
 #ifdef DUMP_ADS
     std::string adsstring;
     std::string num;
     ADSFile *dump;
-    for (size_t i = 0; i < res->ADSFiles.size(); ++i)
-    {
+    for (size_t i = 0; i < res->ADSFiles.size(); ++i) {
         adsstring = res->ADSFiles.at(i);
         dump = static_cast<ADSFile *>(res->getResource(adsstring));
 
         std::cout << "Filename: " << dump->filename << std::endl;
 
-        for (auto it = dump->tagList.begin(); it != dump->tagList.end(); ++it)
-        {
+        for (auto it = dump->tagList.begin(); it != dump->tagList.end(); ++it) {
             num = SCRANTIC::BaseFile::hex_to_string(it->first, std::dec);
-            for (int j = num.size(); j < 3; ++j)
+            for (size_t j = num.size(); j < 3; ++j) {
                 num = " " + num;
+            }
             std::cout << "TAG ID " << num << ": " << it->second << std::endl;
         }
         std::cout << std::endl;
@@ -55,19 +80,17 @@ SCRANTIC::Robinson::Robinson(std::string ResMap, std::string ScrExe)
         std::string ttmName;
         Command *cmd;
         TTMFile *ttm;
-        for (auto it = dump->script.begin(); it != dump->script.end(); ++it)
-        {
+        for (auto it = dump->script.begin(); it != dump->script.end(); ++it) {
             std::cout << "Movie number: " << it->first << " - 0x" << SCRANTIC::BaseFile::hex_to_string(it->first, std::hex) << std::endl;
-            for (size_t pos = 0; pos < it->second.size(); ++pos)
-            {
+            for (size_t pos = 0; pos < it->second.size(); ++pos) {
                 num = SCRANTIC::BaseFile::hex_to_string(pos, std::dec);
-                for (int j = num.size(); j < 3; ++j)
+                for (size_t j = num.size(); j < 3; ++j) {
                     num = " " + num;
+                }
 
                 cmdString = SCRANTIC::BaseFile::commandToString(it->second[pos], true);
                 cmd = &(it->second[pos]);
-                switch (cmd->opcode)
-                {
+                switch (cmd->opcode) {
                 case CMD_ADD_INIT_TTM:
                 case CMD_ADD_TTM:
                 case CMD_KILL_TTM:
@@ -79,8 +102,7 @@ SCRANTIC::Robinson::Robinson(std::string ResMap, std::string ScrExe)
                     break;
                 case CMD_TTM_LABEL:
                 case CMD_SKIP_IF_LAST:
-                    for (size_t j = 0; j < cmd->data.size(); j+=2)
-                    {
+                    for (size_t j = 0; j < cmd->data.size(); j+=2) {
                         ttmName = dump->getResource(cmd->data.at(j));
                         ttm = static_cast<TTMFile *>(res->getResource(ttmName));
                         cmdString += "| " + ttm->getTag(cmd->data.at(j+1)) + " ";
@@ -112,17 +134,18 @@ SCRANTIC::Robinson::~Robinson()
     SDL_DestroyTexture(fgTexture);
     SDL_DestroyTexture(saveTexture);
 
-    if (audioPlayer != NULL)
+    if (audioPlayer != NULL) {
         delete audioPlayer;
+    }
 
-    if (res != NULL)
+    if (res != NULL) {
         delete res;
+    }
 
     std::cout << "-------------- Goodbye from Robinson Crusoe!--------------" << std::endl;
 }
 
-void SCRANTIC::Robinson::displaySplash()
-{
+void SCRANTIC::Robinson::displaySplash() {
     //display splash
     SDL_Rect splashRect;
     splashRect.x = 0;
@@ -132,8 +155,7 @@ void SCRANTIC::Robinson::displaySplash()
     SDL_RenderPresent(renderer);
 }
 
-void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL)
-{
+void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL) {
     //renderer and target
     renderer = rendererSDL;
     rendererTarget = SDL_GetRenderTarget(renderer);
@@ -144,13 +166,11 @@ void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL)
     islandNight = std::rand() % 2;
     islandLarge = std::rand() % 2;
     islandPos = NO_ISLAND;
-    islandTrunk.x = ISLAND_TEMP_X;
-    islandTrunk.y = ISLAND_TEMP_Y;
+    islandTrunk = { ISLAND_TEMP_X, ISLAND_TEMP_Y };
 
     // random pick ocean (0-2)
-    oceanRect.x = 0;
-    oceanRect.y = 0;
-    u_int8_t random = std::rand() % 3;
+    oceanRect = { 0, 0, 0, 0 };
+    u8 random = std::rand() % 3;
     std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
 
     // load SCR files
@@ -165,14 +185,10 @@ void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL)
     scrTexture = NULL;
 
     // many rects
-    fullRect.x = 0;
-    fullRect.y = 0;
-    fullRect.w = 640;
-    fullRect.h = 480;
+    fullRect = {  0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
     // width/heigth gets filled in on load
-    screenRect.x = 0;
-    screenRect.y = 0;
+    screenRect = { 0, 0, 0, 0 };
 
     // create background and foreground texture
     // better pixel format?
@@ -183,61 +199,38 @@ void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL)
     SDL_SetTextureBlendMode(saveTexture, SDL_BLENDMODE_BLEND);
 }
 
-void SCRANTIC::Robinson::initMenu(TTF_Font *font)
-{
+void SCRANTIC::Robinson::initMenu(TTF_Font *font) {
     //generate menu textures
-    ADSFile *ads;
 
     std::string name, adsstring;
+    u16 id;
 
-    u_int16_t id;
+    SDL_Color c1 = { 255,   0,   0, 255 };
+    SDL_Color c2 = { 255, 255, 255, 255 };
+    SDL_Rect rect = { 20, 0, 0, 0 };
 
-    SDL_Rect rect;
-    SDL_Surface *tmpSurface;
-    SDL_Surface *menu;
-    SDL_Texture *tex;
-    SDL_Color c1, c2;
-
-    c1.a = 255;
-    c1.r = 255;
-    c1.g = 0;
-    c1.b = 0;
-
-    c2.a = 255;
-    c2.r = 255;
-    c2.g = 255;
-    c2.b = 255;
-
-    rect.x = 20;
-    rect.y = 0;
-    rect.w = 0;
-    rect.h = 0;
-
-    for (size_t i = 0; i < res->ADSFiles.size(); ++i)
-    {
+    for (size_t i = 0; i < res->ADSFiles.size(); ++i) {
         adsstring = res->ADSFiles.at(i);
-        ads = static_cast<ADSFile *>(res->getResource(adsstring));
+        ADSFile *ads = static_cast<ADSFile *>(res->getResource(adsstring));
 
-        menu = SDL_CreateRGBSurface(0, 640, 480, 32, 0, 0, 0, 0);
+        SDL_Surface *menu = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
 
         rect.y = 10;
 
         TTF_SizeText(font, adsstring.c_str(), &rect.w, &rect.h);
-        tmpSurface = TTF_RenderText_Blended(font, adsstring.c_str(), c1);
+        SDL_Surface *tmpSurface = TTF_RenderText_Blended(font, adsstring.c_str(), c1);
 
-        if (tmpSurface == NULL)
+        if (tmpSurface == NULL) {
             std::cerr << "ERROR: Renderer: Could not render text: " << name << std::endl;
-        else
-        {
+        } else {
             SDL_BlitSurface(tmpSurface, NULL, menu, &rect);
             SDL_FreeSurface(tmpSurface);
         }
 
-        menuPos.insert(std::make_pair(adsstring, std::map<u_int16_t, SDL_Rect>()));
+        menuPos.insert(std::make_pair(adsstring, std::map<u16, SDL_Rect>()));
 
 
-        for (auto tag : ads->tagList)
-        {
+        for (auto tag : ads->tagList) {
             id = tag.first;
             name = tag.second;
 
@@ -246,10 +239,9 @@ void SCRANTIC::Robinson::initMenu(TTF_Font *font)
             TTF_SizeText(font, name.c_str(), &rect.w, &rect.h);
             tmpSurface = TTF_RenderText_Blended(font, name.c_str(), c2);
 
-            if (tmpSurface == NULL)
+            if (tmpSurface == NULL) {
                 std::cerr << "ERROR: Renderer: Could not render text: " << name << std::endl;
-            else
-            {
+            } else {
                 SDL_BlitSurface(tmpSurface, NULL, menu, &rect);
                 SDL_FreeSurface(tmpSurface);
                 rect.w += 6;
@@ -264,12 +256,11 @@ void SCRANTIC::Robinson::initMenu(TTF_Font *font)
 
         }
 
-        tex = SDL_CreateTextureFromSurface(renderer, menu);
+        SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, menu);
 
-        if (tex == NULL)
+        if (tex == NULL) {
             std::cerr << "ERROR: Renderer: Could not convert menu surface to to texture: " << res->ADSFiles.at(i) << std::endl;
-        else
-        {
+        } else {
             SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
             SDL_SetTextureAlphaMod(tex, 200);
         }
@@ -280,37 +271,35 @@ void SCRANTIC::Robinson::initMenu(TTF_Font *font)
     }
 }
 
-bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key)
-{
+bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key) {
     size_t i;
 
-    switch (key)
-    {
+    switch (key) {
     case SDLK_LEFT:
     case SDLK_RIGHT:
-        for (i = 0; i < res->ADSFiles.size(); ++i)
-            if (res->ADSFiles.at(i) == currentMenuScreen)
+        for (i = 0; i < res->ADSFiles.size(); ++i) {
+            if (res->ADSFiles.at(i) == currentMenuScreen) {
                 break;
+            }
+        }
 
-        if (i >= res->ADSFiles.size())
-        {
+        if (i >= res->ADSFiles.size()) {
             std::cerr << "Menu screen not found! " << currentMenuScreen << std::endl;
             return false;
         }
 
-        if (key == SDLK_LEFT)
-        {
-            if (i == 0)
-                i = res->ADSFiles.size()-1;
-            else
+        if (key == SDLK_LEFT) {
+            if (i == 0) {
+                i = res->ADSFiles.size() - 1;
+            } else {
                 --i;
-        }
-        else
-        {
-            if (i == res->ADSFiles.size()-1)
+            }
+        } else {
+            if (i == res->ADSFiles.size()-1) {
                 i = 0;
-            else
+            } else {
                 ++i;
+            }
         }
 
         currentMenuScreen = res->ADSFiles.at(i);
@@ -326,23 +315,21 @@ bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key)
     case SDLK_UP:
     case SDLK_DOWN:
         auto it = menuPos[currentMenuScreen].find(currentMenuPos);
-        if (it == menuPos[currentMenuScreen].end())
-        {
+        if (it == menuPos[currentMenuScreen].end()) {
             std::cerr << "Menu position not found! " << currentMenuScreen << std::endl;
             return false;
         }
 
-        if (key == SDLK_UP)
-        {
-            if (it == menuPos[currentMenuScreen].begin())
+        if (key == SDLK_UP) {
+            if (it == menuPos[currentMenuScreen].begin()) {
                 it = menuPos[currentMenuScreen].end();
+            }
             --it;
-        }
-        else
-        {
+        } else {
             ++it;
-            if (it == menuPos[currentMenuScreen].end())
+            if (it == menuPos[currentMenuScreen].end()) {
                 it = menuPos[currentMenuScreen].begin();
+            }
         }
         currentMenuPos = it->first;
         break;
@@ -351,13 +338,9 @@ bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key)
     return false;
 }
 
-void SCRANTIC::Robinson::menuRenderer()
-{
-    SDL_Texture *tex;
-
+void SCRANTIC::Robinson::menuRenderer() {
     auto it = menuScreen.find(currentMenuScreen);
-    if (it == menuScreen.end())
-    {
+    if (it == menuScreen.end()) {
         std::cerr << "Menu screen not found! " << currentMenuScreen << std::endl;
         return;
     }
@@ -368,18 +351,19 @@ void SCRANTIC::Robinson::menuRenderer()
 }
 
 
-bool SCRANTIC::Robinson::loadMovie(std::string adsName, u_int16_t num)
-{
+bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
     ads = static_cast<ADSFile *>(res->getResource(adsName));
 
-    if (!ads)
+    if (!ads) {
         return false;
+    }
 
     script = ads->getFullMovie(num);
-    if (script.size())
+    if (script.size()) {
         scriptPos = 0;
-    else
+    } else {
         return false;
+    }
 
     name = ads->filename;
     currentMenuScreen = adsName;
@@ -393,24 +377,23 @@ bool SCRANTIC::Robinson::loadMovie(std::string adsName, u_int16_t num)
     return true;
 }
 
-void SCRANTIC::Robinson::startMovie()
-{
+void SCRANTIC::Robinson::startMovie() {
     movieRunning = true;
     renderMenu = false;
     delay = 0;
 }
 
-void SCRANTIC::Robinson::resetPlayer()
-{
+void SCRANTIC::Robinson::resetPlayer() {
     //currentMovie = 0;
 
-    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it)
+    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
         delete (*it);
+    }
 
     ttmScenes.clear();
 
     islandNight = std::rand() % 2;
-    u_int8_t random = std::rand() % 3;
+    u8 random = std::rand() % 3;
     std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
     oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
     islandLarge = std::rand() % 2;
@@ -424,8 +407,9 @@ void SCRANTIC::Robinson::resetPlayer()
     delay = 0;
     delayTicks = 0;
 
-    for (int i = 0; i < MAX_IMAGES; ++i)
+    for (int i = 0; i < MAX_IMAGES; ++i) {
         images[i] = NULL;
+    }
 
     SDL_SetRenderTarget(renderer, saveTexture);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -433,16 +417,16 @@ void SCRANTIC::Robinson::resetPlayer()
     SDL_SetRenderTarget(renderer, rendererTarget);
 }
 
-void SCRANTIC::Robinson::renderBackgroundAtPos(u_int16_t num, int32_t x, int32_t y, bool raft, bool holiday)
-{
+void SCRANTIC::Robinson::renderBackgroundAtPos(u16 num, i32 x, i32 y, bool raft, bool holiday) {
     SDL_Rect src, dest;
     SDL_Texture *bkg;
-    if (!raft && !holiday)
+    if (!raft && !holiday) {
         bkg = backgroundBMP->getImage(renderer, num, src);
-    else if (raft)
+    } else if (raft) {
         bkg = raftBMP->getImage(renderer, num, src);
-    else
+    } else {
         bkg = holidayBMP->getImage(renderer, num, src);
+    }
 
     dest.x = x;
     dest.y = y;
@@ -451,20 +435,17 @@ void SCRANTIC::Robinson::renderBackgroundAtPos(u_int16_t num, int32_t x, int32_t
     SDL_RenderCopy(renderer, bkg, &src, &dest);
 }
 
-void SCRANTIC::Robinson::animateBackground()
-{
-    if (!islandPos)
+void SCRANTIC::Robinson::animateBackground() {
+    if (!islandPos) {
         return;
+    }
 
-    if (islandLarge)
-    {
+    if (islandLarge) {
         renderBackgroundAtPos((SPRITE_WAVE_L_LEFT + animationCycle/12), WAVE_L_LEFT_X + islandTrunk.x, WAVE_L_LEFT_Y + islandTrunk.y);
         renderBackgroundAtPos((SPRITE_WAVE_L_MID + ((animationCycle/12 + 1) % 3)), WAVE_L_MID_X + islandTrunk.x, WAVE_L_MID_Y + islandTrunk.y);
         renderBackgroundAtPos((SPRITE_WAVE_L_RIGHT + ((animationCycle/12 + 2) % 3)), WAVE_L_RIGHT_X + islandTrunk.x, WAVE_L_RIGHT_Y + islandTrunk.y);
         renderBackgroundAtPos((SPRITE_WAVE_STONE + animationCycle/12), WAVE_STONE_X + islandTrunk.x, WAVE_STONE_Y + islandTrunk.y);
-    }
-    else
-    {
+    } else {
         renderBackgroundAtPos((SPRITE_WAVE_LEFT + animationCycle/12), WAVE_LEFT_X + islandTrunk.x, WAVE_LEFT_Y + islandTrunk.y);
         renderBackgroundAtPos((SPRITE_WAVE_MID + ((animationCycle/12 + 1) % 3)), WAVE_MID_X + islandTrunk.x, WAVE_MID_Y + islandTrunk.y);
         renderBackgroundAtPos((SPRITE_WAVE_RIGHT + ((animationCycle/12 + 2) % 3)), WAVE_RIGHT_X + islandTrunk.x, WAVE_RIGHT_Y + islandTrunk.y);
@@ -473,29 +454,28 @@ void SCRANTIC::Robinson::animateBackground()
     //weather is missing
 
     ++animationCycle;
-    if (animationCycle >= 36)
-       animationCycle = 0;
+    if (animationCycle >= 36) {
+        animationCycle = 0;
+    }
 }
 
-void SCRANTIC::Robinson::render()
-{
+void SCRANTIC::Robinson::render() {
     SDL_Rect tmpRect;
-    u_int8_t save;
+    u8 save;
 
     // first render background
     SDL_SetRenderTarget(renderer, bgTexture);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    if (islandPos > 0)
-    {
-        if (islandNight)
+    if (islandPos > 0) {
+        if (islandNight) {
             SDL_RenderCopy(renderer, oceanNightTexture, &oceanRect, &oceanRect);
-        else
+        } else {
             SDL_RenderCopy(renderer, oceanTexture, &oceanRect, &oceanRect);
+        }
 
-        if (islandLarge)
-        {
+        if (islandLarge) {
             renderBackgroundAtPos(SPRITE_L_ISLAND, L_ISLAND_X + islandTrunk.x, L_ISLAND_Y + islandTrunk.y);
             renderBackgroundAtPos(SPRITE_STONE, STONE_X + islandTrunk.x, STONE_Y + islandTrunk.y);
         }
@@ -507,22 +487,18 @@ void SCRANTIC::Robinson::render()
         renderBackgroundAtPos(0, RAFT_X + islandTrunk.x, RAFT_Y + islandTrunk.y, true);
 
         animateBackground();
-    }
-    else
-    {
-        if (scrTexture != NULL)
+    } else {
+        if (scrTexture != NULL) {
             SDL_RenderCopy(renderer, scrTexture, &screenRect, &screenRect);
+        }
     }
 
     // saved image
     SDL_SetRenderTarget(renderer, saveTexture);
-    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it)
-    {
+    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
         save = (*it)->needsSave();
-        if (save)
-        {
-            if (save == 2)
-            {
+        if (save) {
+            if (save == 2) {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
                 SDL_RenderClear(renderer);
             }
@@ -534,11 +510,7 @@ void SCRANTIC::Robinson::render()
     }
     // background end
 
-    SDL_Rect tmp;
-    tmp.w = 320;
-    tmp.h = 240;
-    tmp.x = 0;
-    tmp.y = 0;
+    SDL_Rect tmp = { 0, 0, 320, 240 };
     // render everything to screen
     SDL_SetRenderTarget(renderer, rendererTarget);
     SDL_RenderClear(renderer);
@@ -547,110 +519,98 @@ void SCRANTIC::Robinson::render()
     SDL_RenderCopy(renderer, saveTexture, &fullRect, &fullRect);
 
     std::string scrName;
-    int16_t audio;
+    i16 audio;
 
-    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it)
-    {
-        if ((*it)->isClipped())
-        {
+    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
+        if ((*it)->isClipped()) {
             tmpRect = (*it)->getClipRect();
             SDL_RenderCopy(renderer, (*it)->fg, &tmpRect, &tmpRect);
-        }
-        else
+        } else {
             SDL_RenderCopy(renderer, (*it)->fg, &fullRect, &fullRect);
+        }
 
         audio = (*it)->getSample();
-        if (audio != -1)
+        if (audio != -1) {
             audioPlayer->play(audio);
+        }
 
         scrName = (*it)->getSCRName();
-        if (scrName != "")
-        {
+        if (scrName != "") {
             //std::string scrName = (*it)->getSCRName();
             scrTexture = static_cast<SCRFile *>(res->getResource(scrName))->getImage(renderer, screenRect);
-            if (scrName == "ISLETEMP.SCR")
-            {
+            if (scrName == "ISLETEMP.SCR") {
                 islandPos = ISLAND_RIGHT;
                 islandTrunk.x = ISLAND_TEMP_X;
                 islandTrunk.y = ISLAND_TEMP_Y;
-            }
-            else if (scrName == "ISLAND2.SCR")
-            {
+            } else if (scrName == "ISLAND2.SCR") {
                 islandPos = ISLAND_LEFT;
                 islandTrunk.x = ISLAND2_X;
                 islandTrunk.y = ISLAND2_Y;
-            }
-            else
+            } else {
                 islandPos = NO_ISLAND;
+            }
 
             screenRect.x = 0;
             screenRect.y = 0;
         }
     }
 
-    if (renderMenu)
+    if (renderMenu) {
         menuRenderer();
+    }
 }
 
-void SCRANTIC::Robinson::addTTM(Command cmd)
-{
-    u_int16_t sceneNum;
-    int16_t repeat;
-    if (cmd.opcode == CMD_ADD_INIT_TTM)
-    {
+void SCRANTIC::Robinson::addTTM(Command cmd) {
+    u16 sceneNum;
+    i16 repeat;
+    if (cmd.opcode == CMD_ADD_INIT_TTM) {
         repeat = 0;
         sceneNum = 0;
-    }
-    else
-    {
+    } else {
         sceneNum = cmd.data.at(1);
         repeat = cmd.data.at(2);
-        if (repeat)
+        if (repeat) {
             --repeat;
-        if (cmd.data.at(2) != 0)
-            std::cout << name << ": TTM Movie with blob " << (int16_t)cmd.data.at(2) << std::endl;
+        }
+        if (cmd.data.at(2) != 0) {
+            std::cout << name << ": TTM Movie with blob " << (i16)cmd.data.at(2) << std::endl;
+        }
     }
 
     //check if a TTM matching this hash already exists - if it does do nothing
-    std::pair<u_int16_t, u_int16_t> hash = std::make_pair(cmd.data.at(0), cmd.data.at(1));
+    std::pair<u16, u16> hash = std::make_pair(cmd.data.at(0), cmd.data.at(1));
     std::list<TTMPlayer *>::iterator it = ttmScenes.begin();
-    while (it != ttmScenes.end())
-    {
-        if ((*it)->getHash() == hash)
+    while (it != ttmScenes.end()) {
+        if ((*it)->getHash() == hash) {
             return;
-        else
+        } else {
             ++it;
+        }
     }
 
     TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
 
     // this assumes the only relavant action in the init scripts
     // is to load a SCR! all other actions are lost
-    if (cmd.opcode == CMD_ADD_INIT_TTM)
-    {
+    if (cmd.opcode == CMD_ADD_INIT_TTM) {
         std::string scrName;
 
-        do
-        {
+        do {
             ttm->advanceScript();
             scrName = ttm->getSCRName();
-            if (scrName != "")
-            {
+            if (scrName != "") {
                 scrTexture = static_cast<SCRFile *>(res->getResource(scrName))->getImage(renderer, screenRect);
-                if (scrName == "ISLETEMP.SCR")
-                {
+                if (scrName == "ISLETEMP.SCR") {
                     islandPos = ISLAND_RIGHT;
                     islandTrunk.x = ISLAND_TEMP_X;
                     islandTrunk.y = ISLAND_TEMP_Y;
-                }
-                else if (scrName == "ISLAND2.SCR")
-                {
+                } else if (scrName == "ISLAND2.SCR") {
                     islandPos = ISLAND_LEFT;
                     islandTrunk.x = ISLAND2_X;
                     islandTrunk.y = ISLAND2_Y;
-                }
-                else
+                } else {
                     islandPos = NO_ISLAND;
+                }
 
                 screenRect.x = 0;
                 screenRect.y = 0;
@@ -665,102 +625,92 @@ void SCRANTIC::Robinson::addTTM(Command cmd)
     ttmScenes.push_back(ttm);
 }
 
-size_t SCRANTIC::Robinson::setPosToLabel(std::pair<u_int16_t, u_int16_t> lastPlayed, size_t next)
-{
+size_t SCRANTIC::Robinson::setPosToLabel(std::pair<u16, u16> lastPlayed, size_t next) {
     size_t matches = labels.count(lastPlayed);
 
-    if (!matches)
+    if (!matches) {
         return 0;
+    }
 
-    if (matches > 1)
+    if (matches > 1) {
         std::cout << "==================== multiple ADS Labels " << matches << std::endl;
+    }
 
-    if (next == 0)
-    {
+    if (next == 0) {
         auto it = labels.find(lastPlayed);
         scriptPos = it->second;
-    }
-    else
-    {
+    } else {
         std::cout << "==================== multiple ADS Labels jumping to " << next << " label" << std::endl;
-        std::pair<std::multimap<std::pair<u_int16_t, u_int16_t>, size_t>::iterator, std::multimap<std::pair<u_int16_t, u_int16_t>, size_t>::iterator> ret;
+        std::pair<std::multimap<std::pair<u16, u16>, size_t>::iterator, std::multimap<std::pair<u16, u16>, size_t>::iterator> ret;
         ret = labels.equal_range(lastPlayed);
-        for (auto iteq = ret.first; iteq != ret.second; ++iteq)
-            if (next)
+        for (auto iteq = ret.first; iteq != ret.second; ++iteq) {
+            if (next) {
                 next--;
-            else
+            } else {
                 scriptPos = iteq->second;
+            }
+        }
     }
 
     return matches;
 }
 
-void SCRANTIC::Robinson::runTTMs()
-{
+void SCRANTIC::Robinson::runTTMs() {
     TTMPlayer *ttm;
-    u_int16_t newDelay = 100;
-    u_int16_t oldDelay = delay;
-    u_int32_t ticks;
+    u16 newDelay = 100;
+    u16 oldDelay = delay;
+    u32 ticks;
 
-    if (!oldDelay)
+    if (!oldDelay) {
         oldDelay = 100;
+    }
 
     auto it = ttmScenes.begin();
-    while (it != ttmScenes.end())
-    {
+    while (it != ttmScenes.end()) {
         ttm = (*it);
         ticks = ttm->getRemainigDelay(oldDelay);
 
-        if (!ticks)
-        {
+        if (!ticks) {
             ttm->advanceScript();
 
             newDelay = ttm->getDelay();
 
-            if (newDelay && (newDelay < delay))
+            if (newDelay && (newDelay < delay)) {
                 delay = newDelay;
+            }
         }
 
-        if (ttm->isFinished())
-        {
+        if (ttm->isFinished()) {
             lastTTMs.push_back(ttm->getHash());
             delete ttm;
             it = ttmScenes.erase(it);
             continue;
-        }
-        else
+        } else {
             ++it;
-
-
+        }
     }
 }
 
-void SCRANTIC::Robinson::advanceScripts()
-{    
-    if (ttmScenes.size())
-    {
+void SCRANTIC::Robinson::advanceScripts() {
+    if (ttmScenes.size()) {
         runTTMs();
-        if (lastTTMs.size())
-        {
-            for (auto it = lastTTMs.begin(); it != lastTTMs.end(); ++it)
+        if (lastTTMs.size()) {
+            for (auto it = lastTTMs.begin(); it != lastTTMs.end(); ++it) {
                 advanceADSScript((*it));
+            }
             lastTTMs.clear();
         }
-    }
-    else
+    } else {
         advanceADSScript();
+    }
 }
 
-void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPlayed)
-{
-    if (!script.size())
+void SCRANTIC::Robinson::advanceADSScript(std::pair<u16, u16> lastPlayed) {
+    if (!script.size() || !movieRunning) {
         return;
+    }
 
-    if (!movieRunning)
-        return;
-
-    if (scriptPos >= script.size())
-    {
+    if (scriptPos >= script.size()) {
         movieRunning = false;
         return;
     }
@@ -768,13 +718,12 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPl
     Command cmd;
     std::vector<Command> pickRandom;
 
-    bool firstRun = false;
     bool isRandom = false;
     size_t randomPick;
     size_t labelCount = 0;
     size_t labelDone = 0;
 
-    std::pair<u_int16_t, u_int16_t> hash;
+    std::pair<u16, u16> hash;
     std::list<TTMPlayer *>::iterator it;
 
     //on first run go till PLAY_MOVIE
@@ -782,73 +731,68 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPl
     //otherwise do nothing
     //also: run ADD_TTM_INIT immediately
 
-    if (scriptPos == 0)
-        firstRun = true;
-    else
-    {
+    if (scriptPos != 0) {
         labelCount = setPosToLabel(lastPlayed);
-        if (!labelCount)
-        {
+        if (!labelCount) {
             //std::cout << name << ": no label found for: " << lastPlayed.first << " " << lastPlayed.second << std::endl;
-            if (!ttmScenes.size())
+            if (!ttmScenes.size()) {
                 movieRunning = false;
+            }
             return;
         }
     }
 
-    for (; scriptPos < script.size(); ++scriptPos)
-    {
+    for (; scriptPos < script.size(); ++scriptPos) {
         cmd = script[scriptPos];
 
         //std::cout << "ADS Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
 
-        switch (cmd.opcode)
-        {
+        switch (cmd.opcode) {
         case CMD_ADD_INIT_TTM:
             addTTM(cmd);
             break;
 
         case CMD_SKIP_IF_LAST:
-            for (size_t i = 0; i < cmd.data.size(); i += 2)
-                if ((cmd.data.at(i) == lastPlayed.first) && (cmd.data.at(i+1) == lastPlayed.second))
-                {
+            for (size_t i = 0; i < cmd.data.size(); i += 2) {
+                if ((cmd.data.at(i) == lastPlayed.first) && (cmd.data.at(i+1) == lastPlayed.second)) {
                     //correct ?
-                    while (script[scriptPos++].opcode != CMD_PLAY_MOVIE) { ; }
+                    while (script[scriptPos++].opcode != CMD_PLAY_MOVIE) {
+                        ;
+                    }
                     break;
                 }
+            }
             break;
 
         case CMD_PLAY_MOVIE:
             labelDone++;
-            if (labelCount <= labelDone)
-            {
+            if (labelCount <= labelDone) {
                 runTTMs();
                 return;
-            }
-            else
+            } else {
                 setPosToLabel(lastPlayed, labelDone);
+            }
             break;
 
         case CMD_ADD_TTM: //TTM Scene ??? Repeat
-            if (isRandom)
+            if (isRandom) {
                 pickRandom.push_back(cmd);
-            else
+            } else {
                 addTTM(cmd);
+            }
             break;
 
         case CMD_KILL_TTM:
             hash = std::make_pair(cmd.data.at(0), cmd.data.at(1));
             it = ttmScenes.begin();
-            while (it != ttmScenes.end())
-            {
-                if ((*it)->getHash() == hash)
-                {
+            while (it != ttmScenes.end()) {
+                if ((*it)->getHash() == hash) {
                     (*it)->kill();
                     std::cout << "ADS Command: Kill movie " << hash.first << " " << hash.second << std::endl;
                     break;
-                }
-                else
+                } else {
                     ++it;
+                }
             }
             break;
 
@@ -865,10 +809,9 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPl
             break;
 
         case CMD_PLAY_ADS_MOVIE:
-            if (currentMovie == cmd.data.at(0))
+            if (currentMovie == cmd.data.at(0)) {
                 break;
-            else
-            {
+            } else {
                 queuedMovie = currentMovie;
                 queuedPos = ++scriptPos;
                 loadMovie(name, cmd.data.at(0));
@@ -887,8 +830,7 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPl
 
     std::cout << name << ": Finished ADS Movie: " << currentMovie << std::endl;
 
-    if (queuedMovie)
-    {
+    if (queuedMovie) {
         loadMovie(name, queuedMovie);
         queuedMovie = 0;
         scriptPos = queuedPos;

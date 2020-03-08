@@ -19,16 +19,16 @@ SCRANTIC::PALFile::PALFile(const std::string &name, v8 &data)
         palCount = 256;
     }*/
 
-    u_int8_t r,g,b;
+    u8 r,g,b;
     SDL_Color color;
     color.a = 0;
 
-    for (u_int32_t i = 0; i < palCount; i++)
+    for (u32 i = 0; i < palCount; i++)
     {
         readUintLE(it, r);
         readUintLE(it, g);
         readUintLE(it, b);
-        //palette.push_back(std::make_tuple< u_int8_t, u_int8_t, u_int8_t >(r*4, g*4, b*4));
+        //palette.push_back(std::make_tuple< u8, u8, u8 >(r*4, g*4, b*4));
         color.r = r*4;
         color.g = g*4;
         color.b = b*4;

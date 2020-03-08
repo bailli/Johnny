@@ -105,7 +105,7 @@ u16 SCRANTIC::CompressedBaseFile::readBits(v8 const &data, size_t &bytePos, u8 &
     return byte;
 }
 
-v8 SCRANTIC::CompressedBaseFile::LZWDecompress(v8 const &compressedData, size_t offset, u32 size) {
+v8 SCRANTIC::CompressedBaseFile::LZCDecompress(v8 const &compressedData, size_t offset, u32 size) {
     v8 decompressedData;
     std::pair<u16, u8> dictionary[4096];
     v8 decodeStack;
@@ -208,7 +208,7 @@ bool SCRANTIC::CompressedBaseFile::handleDecompression(v8 &data, v8::iterator &i
 //         }
         break;
     case 0x02:
-        uncompressedData = LZWDecompress(data, i, uncompressedSize);
+        uncompressedData = LZCDecompress(data, i, uncompressedSize);
         break;
     case 0x03:
         uncompressedData = RLE2Decompress(data, i, uncompressedSize);

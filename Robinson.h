@@ -19,10 +19,13 @@ namespace SCRANTIC {
 
 class Robinson
 {
+private:
+    Robinson(Robinson &C);
+
 protected:
     //menu stuff
     std::map<std::string, SDL_Texture *> menuScreen;
-    std::map<std::string, std::map<u_int16_t, SDL_Rect> > menuPos;
+    std::map<std::string, std::map<u16, SDL_Rect> > menuPos;
     std::string currentMenuScreen;
     size_t currentMenuPos;
     bool renderMenu;
@@ -31,7 +34,7 @@ protected:
     ADSFile *ads;
     std::vector<Command> script;
     size_t scriptPos;
-    std::multimap<std::pair<u_int16_t, u_int16_t>, size_t> labels;
+    std::multimap<std::pair<u16, u16>, size_t> labels;
 
     RIFFPlayer *audioPlayer;
 
@@ -40,8 +43,8 @@ protected:
 
     SDL_Color *palette;
 
-    int8_t animationCycle;
-    int8_t islandPos;
+    i8 animationCycle;
+    i8 islandPos;
     SDL_Point islandTrunk;
 
     bool islandNight;
@@ -63,40 +66,40 @@ protected:
     BMPFile *holidayBMP;
     BMPFile *raftBMP;
 
-    std::list<std::pair<u_int16_t, u_int16_t> > lastTTMs;
+    std::list<std::pair<u16, u16> > lastTTMs;
 
     // lots of rects...
     SDL_Rect fullRect;
     SDL_Rect oceanRect;
     SDL_Rect screenRect;
 
-    //u_int16_t currentMovie;
+    //u16 currentMovie;
     std::string name;
 
     std::list<TTMPlayer *> ttmScenes;
 
     BMPFile *images[MAX_IMAGES];
 
-    u_int16_t delay;
-    u_int16_t currentMovie;
-    u_int16_t queuedMovie;
+    u16 delay;
+    u16 currentMovie;
+    u16 queuedMovie;
     size_t queuedPos;
 
-    u_int32_t delayTicks;
+    u32 delayTicks;
 
     void resetPlayer();
 
     void menuRenderer();
-    void renderBackgroundAtPos(u_int16_t num, int32_t x, int32_t y, bool raft = false, bool holiday = false);
+    void renderBackgroundAtPos(u16 num, i32 x, i32 y, bool raft = false, bool holiday = false);
     void animateBackground();
     void displaySplash();
 
-    size_t setPosToLabel(std::pair<u_int16_t, u_int16_t> lastPlayed, size_t next = 0);
+    size_t setPosToLabel(std::pair<u16, u16> lastPlayed, size_t next = 0);
     void addTTM(Command cmd);
     void runTTMs();
 
 public:
-    Robinson(std::string ResMap, std::string ScrExe);
+    Robinson(const std::string &ResMap, const std::string &ScrExe);
     ~Robinson();
 
     bool navigateMenu(SDL_Keycode key);
@@ -104,17 +107,17 @@ public:
     void initMenu(TTF_Font *font);
     void initRenderer(SDL_Renderer *rendererSDL);
 
-    void advanceADSScript(std::pair<u_int16_t, u_int16_t> lastPlayed = std::make_pair((u_int16_t)0,(u_int16_t)0));
+    void advanceADSScript(std::pair<u16, u16> lastPlayed = std::make_pair((u16)0,(u16)0));
     void advanceScripts();
     void render();
 
     bool isMenuOpen() { return renderMenu; }
     bool isMovieRunning() { return movieRunning; }
 
-    bool loadMovie(std::string adsName, u_int16_t num);
+    bool loadMovie(const std::string &adsName, u16 num);
     void startMovie();
 
-    u_int32_t getCurrentDelay() { return delay; }
+    u32 getCurrentDelay() { return delay; }
     void displayMenu(bool show) { renderMenu = show; }
 };
 

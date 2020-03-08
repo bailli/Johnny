@@ -1,12 +1,13 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-typedef std::int8_t i8;
-typedef std::int16_t i16;
-typedef std::int32_t i32;
-typedef std::uint8_t u8;
-typedef std::uint16_t u16;
-typedef std::uint32_t u32;
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
+
+#define WINDOW_WIDTH 640
+#define WINDOW_HEIGHT 480
+
+#define DELAY_MS 20
 
 #define ISLAND_RIGHT 0x1
 #define ISLAND_LEFT  0x2
