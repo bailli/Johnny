@@ -115,7 +115,7 @@ void SCRANTIC::BaseFile::assertString(v8::iterator &it, std::string expectedStri
     std::string actualString = readConstString(it, expectedString.size());
     if (actualString != expectedString) {
         std::cerr << filename << ": \"" << expectedString << "\" expected; got \"" << actualString << "\"" << std::endl;
-        throw BaseFileExcpetion();
+        throw BaseFileException();
     }
 }
 

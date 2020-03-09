@@ -74,7 +74,7 @@ namespace SCRANTIC {
 #define CMD_UNK_FFFF         0xFFFF // Part of Command "0xF010?
 
 
-struct BaseFileExcpetion : public std::exception {
+struct BaseFileException : public std::exception {
    const char * what () const throw () {
       return "Magic string not found!";
    }
