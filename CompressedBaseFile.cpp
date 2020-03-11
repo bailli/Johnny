@@ -125,7 +125,7 @@ u16 SCRANTIC::CompressedBaseFile::readBits(v8 const &data, size_t &bytePos, u8 &
     return byte;
 }
 
-bool SCRANTIC::CompressedBaseFile::FindInDictionary(std::vector<v8> &dictionary, v8 currentBlock, u16 &dictPos) {
+bool SCRANTIC::CompressedBaseFile::findInDictionary(std::vector<v8> &dictionary, v8 currentBlock, u16 &dictPos) {
     if (currentBlock.size() == 1) {
         dictPos = currentBlock[0];
         return true;
@@ -171,7 +171,7 @@ v8 SCRANTIC::CompressedBaseFile::LZCCompress(v8 const &uncompressedData) {
         nextByte = uncompressedData[bytePos++];
         currentBlock.push_back(nextByte);
 
-        if (!FindInDictionary(dictionary, currentBlock, dictPos)) {
+        if (!findInDictionary(dictionary, currentBlock, dictPos)) {
             if (dictionary.size() + 256 < 4095) {
                 dictionary.push_back(currentBlock);
             }

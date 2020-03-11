@@ -19,7 +19,10 @@ protected:
 
 public:
     SCRFile(const std::string &name, v8 &data);
+    SCRFile(const std::string &ppmFilename);
     ~SCRFile();
+
+    void saveFile(std::string path = "");
 
     SDL_Texture *getImage(SDL_Renderer *renderer, SDL_Rect &rect);
     void setPalette(SDL_Color color[], u16 count);

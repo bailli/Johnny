@@ -89,7 +89,8 @@ struct Command {
 class BaseFile {
 protected:
     void assertString(v8::iterator &it, std::string expectedString);
-    SDL_Surface* createSdlSurface(v8 &uncompressedData, u16 width, u16 height, size_t offset = 0);
+    SDL_Surface* createSdlSurface(v8 &data, u16 width, u16 height, size_t offset = 0);
+    v8 convertScrToRgbData(const v8 &data);
 
     SDL_Color defaultPalette[256];
 
@@ -100,8 +101,8 @@ public:
     std::string filename;
     static std::string commandToString(Command cmd, bool ads = false);
 
-    static std::string readString(std::ifstream *in, u8 length = 0);
-    static std::string readString(v8::iterator &it, u8 length = 0);
+    static std::string readString(std::ifstream *in, u8 length = 0, char delimiter = '\0');
+    static std::string readString(v8::iterator &it, u8 length = 0, char delimiter = '\0');
     static std::string readConstString(std::ifstream *in, u8 length);
     static std::string readConstString(v8::iterator &it, u8 length);
 

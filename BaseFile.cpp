@@ -28,7 +28,7 @@ SCRANTIC::BaseFile::~BaseFile() {
 
 }
 
-std::string SCRANTIC::BaseFile::readString(std::ifstream *in, u8 length) {
+std::string SCRANTIC::BaseFile::readString(std::ifstream *in, u8 length, char delimiter) {
     if (!in->is_open()) {
         return "";
     }
@@ -40,7 +40,7 @@ std::string SCRANTIC::BaseFile::readString(std::ifstream *in, u8 length) {
 
     in->read(&c, 1);
     i += 1;
-    while (c != '\0') {
+    while (c != delimiter) {
         str += c;
         in->read(&c, 1);
         i += 1;
@@ -56,7 +56,7 @@ std::string SCRANTIC::BaseFile::readString(std::ifstream *in, u8 length) {
     return str;
 }
 
-std::string SCRANTIC::BaseFile::readString(v8::iterator &it, u8 length) {
+std::string SCRANTIC::BaseFile::readString(v8::iterator &it, u8 length, char delimiter) {
     std::string str = "";
     u8 i = 0;
 
@@ -64,7 +64,7 @@ std::string SCRANTIC::BaseFile::readString(v8::iterator &it, u8 length) {
     ++it;
     ++i;
 
-    while (c != '\0') {
+    while (c != delimiter) {
         str += c;
         c = (char)*it;
         ++i;
@@ -270,7 +270,26 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads) {
     }
 }
 
-SDL_Surface* SCRANTIC::BaseFile::createSdlSurface(v8 &uncompressedData, u16 width, u16 height, size_t offset) {
+v8 SCRANTIC::BaseFile::convertScrToRgbData(const v8 &data) {
+    v8 bmpData;
+    SDL_Color color;
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        color = defaultPalette[data[i] >> 4];
+        bmpData.push_back(color.r);
+        bmpData.push_back(color.g);
+        bmpData.push_back(color.b);
+
+        color = defaultPalette[data[i] & 0xF];
+        bmpData.push_back(color.r);
+        bmpData.push_back(color.g);
+        bmpData.push_back(color.b);
+    }
+
+    return bmpData;
+}
+
+SDL_Surface* SCRANTIC::BaseFile::createSdlSurface(v8 &data, u16 width, u16 height, size_t offset) {
     SDL_Surface *surface = SDL_CreateRGBSurface(0, width, height, 8, 0, 0, 0, 0);
     SDL_SetPaletteColors(surface->format->palette, defaultPalette, 0, 256);
 
@@ -284,11 +303,11 @@ SDL_Surface* SCRANTIC::BaseFile::createSdlSurface(v8 &uncompressedData, u16 widt
         for (int x = 0; x < surface->w; ++x) {
             if (high) {
                 high = false;
-                idx = uncompressedData[z] & 0xF;
+                idx = data[z] & 0xF;
                 z++;
             } else {
                 high = true;
-                idx = uncompressedData[z] >> 4;
+                idx = data[z] >> 4;
             }
             p[y * surface->w + x] = idx;
         }
