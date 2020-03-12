@@ -4,6 +4,12 @@
 #include "BaseFile.h"
 #include <tuple>
 
+#ifdef WIN32
+#include <SDL.h>
+#else
+#include <SDL2/SDL.h>
+#endif
+
 namespace SCRANTIC {
 
 class PALFile : public BaseFile

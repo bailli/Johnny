@@ -2,10 +2,11 @@
 #define SCRFILE_H
 
 #include "CompressedBaseFile.h"
+#include "GraphicBaseFile.h"
 
 namespace SCRANTIC {
 
-class SCRFile : public CompressedBaseFile {
+class SCRFile : public CompressedBaseFile, public GraphicBaseFile {
 protected:
     u16 dimBinSize; //
     u16 magic;  //0x8000
@@ -19,7 +20,7 @@ protected:
 
 public:
     SCRFile(const std::string &name, v8 &data);
-    SCRFile(const std::string &ppmFilename);
+    explicit SCRFile(const std::string &ppmFilename);
     ~SCRFile();
 
     void saveFile(std::string path = "");

@@ -2,10 +2,11 @@
 #define BMPFILE_H
 
 #include "CompressedBaseFile.h"
+#include "GraphicBaseFile.h"
 
 namespace SCRANTIC {
 
-class BMPFile : public CompressedBaseFile {
+class BMPFile : public CompressedBaseFile, public GraphicBaseFile {
 protected:
     u16 infBinSize;
     u16 magic;  //0x8000

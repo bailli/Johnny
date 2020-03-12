@@ -2,7 +2,6 @@
 #define COMPRESSEDBASEFILE_H
 
 #include "BaseFile.h"
-#include "types.h"
 
 namespace SCRANTIC {
 

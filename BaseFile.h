@@ -8,12 +8,6 @@
 
 #include "types.h"
 
-#ifdef WIN32
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
-
 namespace SCRANTIC {
 
 // TTM instructions
@@ -89,10 +83,6 @@ struct Command {
 class BaseFile {
 protected:
     void assertString(v8::iterator &it, std::string expectedString);
-    SDL_Surface* createSdlSurface(v8 &data, u16 width, u16 height, size_t offset = 0);
-    v8 convertScrToRgbData(const v8 &data);
-
-    SDL_Color defaultPalette[256];
 
 public:
     explicit BaseFile(const std::string &name);

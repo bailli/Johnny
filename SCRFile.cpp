@@ -38,41 +38,35 @@ SCRANTIC::SCRFile::SCRFile(const std::string &ppmFilename)
     in.open(ppmFilename, std::ios::binary | std::ios::in);
     in.unsetf(std::ios::skipws);
 
-    std::string header = readString(&in, 0, '\n');
+    readString(&in, 0, '\n'); /* header: P6 */
     std::string dimension = readString(&in, 0, '\n');
-    std::string colorCount = readString(&in, 0, '\n');
+    readString(&in, 0, '\n'); /* 255 */
 
     width = std::stoi(dimension.substr(0, dimension.find(' ')));
     height = std::stoi(dimension.substr(dimension.find(' ') + 1));
 
     u32 ppmSize = width * height * 3;
+    SDL_Color color;
+    i8 palIndex;
     u8 r, g, b;
     u8 byte;
     bool high = false;
-    v8 ppmData;
 
     for (u32 i = 0; i < ppmSize; i += 3) {
         readUintLE(&in, r);
         readUintLE(&in, g);
         readUintLE(&in, b);
+        color = { r, g, b, 0 };
 
-        ppmData.push_back(r);
-        ppmData.push_back(g);
-        ppmData.push_back(b);
-
-        for (u8 j = 0; j < 16; j++) {
-            if ((defaultPalette[j].r == r)
-                    && (defaultPalette[j].g == g)
-                    && (defaultPalette[j].b == b)) {
-                if (!high) {
-                    byte = j << 4;
-                    high = true;
-                } else {
-                    byte |= j;
-                    uncompressedData.push_back(byte);
-                    high = false;
-                }
-                break;
+        palIndex = matchSdlColorToPaletteNumber(color);
+        if (palIndex != -1) {
+            if (!high) {
+                byte = palIndex << 4;
+                high = true;
+            } else {
+                byte |= palIndex;
+                uncompressedData.push_back(byte);
+                high = false;
             }
         }
     }

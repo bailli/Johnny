@@ -2,6 +2,7 @@
 
 SCRANTIC::BMPFile::BMPFile(const std::string &name, v8 &data)
     : CompressedBaseFile(name),
+      GraphicBaseFile(),
       overview(NULL),
       ovTexture(NULL) {
 

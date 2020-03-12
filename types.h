@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <cstdint>
 #include <vector>
 
 typedef std::int8_t i8;
