@@ -1,5 +1,7 @@
 #include "GraphicBaseFile.h"
 
+#include "BaseFile.h"
+
 SCRANTIC::GraphicBaseFile::GraphicBaseFile() {
     defaultPalette[0]  = { 168,   0, 168,   0};
     defaultPalette[1]  = {   0,   0, 168, 255};
@@ -64,6 +66,36 @@ SDL_Surface* SCRANTIC::GraphicBaseFile::createSdlSurface(v8 &data, u16 width, u1
 
     return surface;
 }
+
+v8 SCRANTIC::GraphicBaseFile::convertRgbDataToScr(std::ifstream &in, u32 pixelCount) {
+    SDL_Color color;
+    i8 palIndex;
+    u8 r, g, b;
+    u8 byte;
+    bool high = false;
+    v8 scrData;
+
+    for (u32 i = 0; i < pixelCount; i += 3) {
+        BaseFile::readUintLE(&in, r);
+        BaseFile::readUintLE(&in, g);
+        BaseFile::readUintLE(&in, b);
+        color = { r, g, b, 0 };
+
+        palIndex = matchSdlColorToPaletteNumber(color);
+        if (palIndex != -1) {
+            if (!high) {
+                byte = palIndex << 4;
+                high = true;
+            } else {
+                byte |= palIndex;
+                scrData.push_back(byte);
+                high = false;
+            }
+        }
+    }
+    return scrData;
+}
+
 
 i8 SCRANTIC::GraphicBaseFile::matchSdlColorToPaletteNumber(SDL_Color& color) {
     for (u8 i = 0; i < 16; ++i) {

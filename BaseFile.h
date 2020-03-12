@@ -90,6 +90,7 @@ public:
 
     std::string filename;
     static std::string commandToString(Command cmd, bool ads = false);
+    v8 repackIntoResource() { return v8{}; };
 
     static std::string readString(std::ifstream *in, u8 length = 0, char delimiter = '\0');
     static std::string readString(v8::iterator &it, u8 length = 0, char delimiter = '\0');
@@ -101,6 +102,8 @@ public:
     template < typename T > static void readUintLE(std::ifstream *in, T &var);
     template < typename T > static void readUintLE(v8::iterator &it, T &var);
     template < typename T > static std::string hexToString(T t, std::ios_base & (*f)(std::ios_base&));
+
+    template < typename T > static void writeUintLE(v8 &data, T &var);
 };
 
 }
@@ -137,6 +140,14 @@ std::string SCRANTIC::BaseFile::hexToString(T t, std::ios_base & (*f)(std::ios_b
     std::ostringstream oss;
     oss << f << t;
     return oss.str();
+}
+
+template < typename T >
+void SCRANTIC::BaseFile::writeUintLE(v8 &data, T &var) {
+    size_t size = sizeof(var);
+    for (u8 i = 0; i < size; ++i) {
+        data.push_back((var >> (8*i)) & 0xFF);
+    }
 }
 
 

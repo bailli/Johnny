@@ -24,6 +24,7 @@ public:
     ~SCRFile();
 
     void saveFile(std::string path = "");
+    v8 repackIntoResource();
 
     SDL_Texture *getImage(SDL_Renderer *renderer, SDL_Rect &rect);
     void setPalette(SDL_Color color[], u16 count);

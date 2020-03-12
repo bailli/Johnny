@@ -27,6 +27,38 @@ SCRANTIC::SCRFile::SCRFile(const std::string &name, v8 &data) :
     image = createSdlSurface(uncompressedData, width, height);
 }
 
+v8 SCRANTIC::SCRFile::repackIntoResource() {
+
+    std::string strings[3] = { "SCR:", "DIM:", "BIN:" };
+
+    magic = 0x8000;
+
+    compressionFlag = 2;
+    v8 compressedData = LZCCompress(uncompressedData);
+    uncompressedSize = uncompressedData.size();
+    compressedSize = compressedData.size() + 5;
+
+    dimSize = 4;
+    dimBinSize = dimSize + compressedSize + 16;
+
+    v8 rawData(strings[0].begin(), strings[0].end());
+    BaseFile::writeUintLE(rawData, dimBinSize);
+    BaseFile::writeUintLE(rawData, magic);
+    std::copy(strings[1].begin(), strings[1].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, dimSize);
+    BaseFile::writeUintLE(rawData, width);
+    BaseFile::writeUintLE(rawData, height);
+    std::copy(strings[2].begin(), strings[2].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, compressedSize);
+    BaseFile::writeUintLE(rawData, compressionFlag);
+    BaseFile::writeUintLE(rawData, uncompressedSize);
+    std::copy(compressedData.begin(), compressedData.end(), std::back_inserter(rawData));
+
+    compressedSize -= 5;
+
+    return rawData;
+}
+
 SCRANTIC::SCRFile::SCRFile(const std::string &ppmFilename)
     : CompressedBaseFile(ppmFilename),
       image(NULL),
@@ -46,30 +78,9 @@ SCRANTIC::SCRFile::SCRFile(const std::string &ppmFilename)
     height = std::stoi(dimension.substr(dimension.find(' ') + 1));
 
     u32 ppmSize = width * height * 3;
-    SDL_Color color;
-    i8 palIndex;
-    u8 r, g, b;
-    u8 byte;
-    bool high = false;
+    uncompressedData = convertRgbDataToScr(in, ppmSize);
 
-    for (u32 i = 0; i < ppmSize; i += 3) {
-        readUintLE(&in, r);
-        readUintLE(&in, g);
-        readUintLE(&in, b);
-        color = { r, g, b, 0 };
-
-        palIndex = matchSdlColorToPaletteNumber(color);
-        if (palIndex != -1) {
-            if (!high) {
-                byte = palIndex << 4;
-                high = true;
-            } else {
-                byte |= palIndex;
-                uncompressedData.push_back(byte);
-                high = false;
-            }
-        }
-    }
+    in.close();
 
     image = createSdlSurface(uncompressedData, width, height);
 }
@@ -86,6 +97,7 @@ void SCRANTIC::SCRFile::saveFile(std::string path) {
 
     SCRANTIC::BaseFile::saveFile(ppmFile, newFilename, path);
 }
+
 
 SCRANTIC::SCRFile::~SCRFile() {
     SDL_DestroyTexture(texture);
