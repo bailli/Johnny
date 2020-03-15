@@ -26,6 +26,9 @@ public:
     BMPFile(const std::string &name, v8 &data);
     ~BMPFile();
 
+    void saveFile(const std::string &path);
+    v8 repackIntoResource() override;
+
     SDL_Texture *getImage(SDL_Renderer *renderer, u16 num, SDL_Rect &rect);
     SDL_Texture *getOverviewImage(SDL_Renderer *renderer, SDL_Rect &rect);
     void setPalette(SDL_Color color[], u16 count);

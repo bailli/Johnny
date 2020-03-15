@@ -90,14 +90,15 @@ public:
 
     std::string filename;
     static std::string commandToString(Command cmd, bool ads = false);
-    v8 repackIntoResource() { return v8{}; };
+    virtual void saveFile(const std::string &path) {};
+    virtual v8 repackIntoResource() { return v8{}; };
 
     static std::string readString(std::ifstream *in, u8 length = 0, char delimiter = '\0');
     static std::string readString(v8::iterator &it, u8 length = 0, char delimiter = '\0');
     static std::string readConstString(std::ifstream *in, u8 length);
     static std::string readConstString(v8::iterator &it, u8 length);
 
-    static void saveFile(const v8 &data, std::string &name, std::string path = "");
+    static void writeFile(const v8 &data, std::string &name, std::string path = "");
 
     template < typename T > static void readUintLE(std::ifstream *in, T &var);
     template < typename T > static void readUintLE(v8::iterator &it, T &var);

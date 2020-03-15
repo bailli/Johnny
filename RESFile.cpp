@@ -63,12 +63,14 @@ SCRANTIC::RESFile::RESFile(const std::string &name)
             PALFile *pal = new PALFile(newRes.filename, newRes.data);
             newRes.handle = static_cast<BaseFile *>(pal);
         } else if (newRes.filetype == "SCR") {
-            //std::string ppmFilename = newRes.filename.substr(0, newRes.filename.rfind('.')) + ".PPM";
-            //SCRFile *scr = new SCRFile(ppmFilename);
+            //std::string bmpFilename = newRes.filename.substr(0, newRes.filename.rfind('.')) + ".BMP";
+            //SCRFile *scr = new SCRFile(bmpFilename);
             SCRFile *scr = new SCRFile(newRes.filename, newRes.data);
+            //scr->saveFile("");
             newRes.handle = static_cast<BaseFile *>(scr);
         } else if (newRes.filetype == "BMP") {
             BMPFile *bmp = new BMPFile(newRes.filename, newRes.data);
+            //bmp->saveFile("");
             newRes.handle = static_cast<BaseFile *>(bmp);
         } else if (newRes.filetype == "TTM") {
             TTMFile *ttm = new TTMFile(newRes.filename, newRes.data);

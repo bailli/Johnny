@@ -56,6 +56,64 @@ SCRANTIC::BMPFile::~BMPFile() {
     SDL_DestroyTexture(ovTexture);
 }
 
+void SCRANTIC::BMPFile::saveFile(const std::string &path) {
+    size_t z = 0;
+    for (u16 i = 0; i < imageCount; ++i) {
+        v8 bmpFile = createRGBABitmapData(uncompressedData, widthList.at(i), heightList.at(i), z);
+        z += (widthList.at(i) * heightList.at(i)) / 2;
+
+        std::string num = hexToString(i, std::dec);
+        for (size_t j = num.size(); j < 3; ++j) {
+            num = "0" + num;
+        }
+        std::string newFilename = filename + "." + num + ".BMP";
+
+        SCRANTIC::BaseFile::writeFile(bmpFile, newFilename, path);
+    }
+}
+
+
+v8 SCRANTIC::BMPFile::repackIntoResource() {
+
+    std::string strings[3] = { "BMP:", "INF:", "BIN:" };
+
+    magic = 0x8000;
+
+    compressionFlag = 2;
+    v8 compressedData = LZCCompress(uncompressedData);
+    uncompressedSize = uncompressedData.size();
+    compressedSize = compressedData.size() + 5;
+
+    imageCount = widthList.size();
+    infSize = imageCount * 4 + 2;
+
+    infBinSize = infSize + compressedSize + 16;
+
+    v8 rawData(strings[0].begin(), strings[0].end());
+    BaseFile::writeUintLE(rawData, infBinSize);
+    BaseFile::writeUintLE(rawData, magic);
+    std::copy(strings[1].begin(), strings[1].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, infSize);
+    BaseFile::writeUintLE(rawData, imageCount);
+    for (u16 i = 0; i < imageCount; ++i) {
+        BaseFile::writeUintLE(rawData, widthList.at(i));
+    }
+    for (u16 i = 0; i < imageCount; ++i) {
+        BaseFile::writeUintLE(rawData, heightList.at(i));
+    }
+    std::copy(strings[2].begin(), strings[2].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, compressedSize);
+    BaseFile::writeUintLE(rawData, compressionFlag);
+    BaseFile::writeUintLE(rawData, uncompressedSize);
+    std::copy(compressedData.begin(), compressedData.end(), std::back_inserter(rawData));
+
+    compressedSize -= 5;
+
+    return rawData;
+}
+
+
+
 SDL_Texture *SCRANTIC::BMPFile::getImage(SDL_Renderer *renderer, u16 num, SDL_Rect &rect) {
     if ((num >= imageList.size()) || (imageList.at(num) == NULL)) {
         return NULL;

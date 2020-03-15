@@ -64,40 +64,39 @@ SCRANTIC::SCRFile::SCRFile(const std::string &ppmFilename)
       image(NULL),
       texture(NULL) {
 
+    uncompressedData = readRGBABitmapData(filename, width, height);
     filename = ppmFilename.substr(0, ppmFilename.rfind('.')) + ".SCR";
 
-    std::ifstream in;
-    in.open(ppmFilename, std::ios::binary | std::ios::in);
-    in.unsetf(std::ios::skipws);
 
-    readString(&in, 0, '\n'); /* header: P6 */
-    std::string dimension = readString(&in, 0, '\n');
-    readString(&in, 0, '\n'); /* 255 */
-
-    width = std::stoi(dimension.substr(0, dimension.find(' ')));
-    height = std::stoi(dimension.substr(dimension.find(' ') + 1));
-
-    u32 ppmSize = width * height * 3;
-    uncompressedData = convertRgbDataToScr(in, ppmSize);
-
-    in.close();
+//     readString(&in, 0, '\n'); /* header: P6 */
+//     std::string dimension = readString(&in, 0, '\n');
+//     readString(&in, 0, '\n'); /* 255 */
+//
+//     width = std::stoi(dimension.substr(0, dimension.find(' ')));
+//     height = std::stoi(dimension.substr(dimension.find(' ') + 1));
+//
+//     u32 ppmSize = width * height * 3;
+//     uncompressedData = convertRgbDataToScr(in, ppmSize);
+//
+//     in.close();
 
     image = createSdlSurface(uncompressedData, width, height);
 }
 
-void SCRANTIC::SCRFile::saveFile(std::string path) {
-    std::string header = "P6\n" + hexToString(width, std::dec) + " " + hexToString(height, std::dec) + "\n255\n";
-    v8 ppmFile(header.begin(), header.end());
+void SCRANTIC::SCRFile::saveFile(const std::string &path) {
+//     std::string header = "P6\n" + hexToString(width, std::dec) + " " + hexToString(height, std::dec) + "\n255\n";
+//     v8 ppmFile(header.begin(), header.end());
+//
+//     v8 bitmapData = convertScrToRgbData(uncompressedData);
+//
+//     std::copy(bitmapData.begin(), bitmapData.end(), std::back_inserter(ppmFile));
 
-    v8 bitmapData = convertScrToRgbData(uncompressedData);
+    v8 bmpFile = createRGBABitmapData(uncompressedData, width, height);
 
-    std::copy(bitmapData.begin(), bitmapData.end(), std::back_inserter(ppmFile));
+    std::string newFilename = filename.substr(0, filename.rfind('.')) + ".BMP";
 
-    std::string newFilename = filename.substr(0, filename.rfind('.')) + ".PPM";
-
-    SCRANTIC::BaseFile::saveFile(ppmFile, newFilename, path);
+    SCRANTIC::BaseFile::writeFile(bmpFile, newFilename, path);
 }
-
 
 SCRANTIC::SCRFile::~SCRFile() {
     SDL_DestroyTexture(texture);

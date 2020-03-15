@@ -102,7 +102,7 @@ void SCRANTIC::BaseFile::assertString(v8::iterator &it, std::string expectedStri
     }
 }
 
-void SCRANTIC::BaseFile::saveFile(const std::vector<u8> &data, std::string &name, std::string path) {
+void SCRANTIC::BaseFile::writeFile(const std::vector<u8> &data, std::string &name, std::string path) {
     std::ofstream out;
 
     if (path.length() && (path[path.length()-1] != '/')) {
