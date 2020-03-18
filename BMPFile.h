@@ -24,6 +24,7 @@ protected:
 
 public:
     BMPFile(const std::string &name, v8 &data);
+    explicit BMPFile(const std::string &path);
     ~BMPFile();
 
     void saveFile(const std::string &path);
@@ -42,4 +43,3 @@ public:
 }
 
 #endif // BMPFILE_H
-

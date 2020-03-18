@@ -51,8 +51,6 @@ private:
 
 protected:
     SDL_Surface* createSdlSurface(v8 &data, u16 width, u16 height, size_t offset = 0);
-    //v8 convertScrToRgbData(const v8 &data, size_t size = 0, size_t offset = 0, bool alpha = false);
-    //v8 convertRgbDataToScr(std::ifstream &in, u32 pixelCount);
     v8 createRGBABitmapData(v8 &data, u16 width, u16 height, size_t offset = 0);
     v8 readRGBABitmapData(const std::string &filename, u16 &width, u16 &height);
 

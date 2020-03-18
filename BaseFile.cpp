@@ -124,6 +124,25 @@ void SCRANTIC::BaseFile::writeFile(const std::vector<u8> &data, std::string &nam
     out.close();
 }
 
+void SCRANTIC::BaseFile::writeFile(const std::string &data, std::string &name, std::string path) {
+        std::ofstream out;
+
+    if (path.length() && (path[path.length()-1] != '/')) {
+        path += "/";
+    }
+
+    out.open(path + name, std::ios::out);
+
+    if (!out.is_open()) {
+        std::cerr << "BaseFile: Could not open " << path + name << std::endl;
+        return;
+    }
+
+    out << data;
+
+    out.close();
+}
+
 std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads) {
     std::string ret = " ";
     std::string hex;

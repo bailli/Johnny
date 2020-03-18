@@ -5,6 +5,8 @@
 #include "TTMFile.h"
 #include "ADSFile.h"
 
+#include <experimental/filesystem>
+
 SCRANTIC::RESFile::RESFile(const std::string &name)
     : BaseFile(name) {
 
@@ -61,16 +63,20 @@ SCRANTIC::RESFile::RESFile(const std::string &name)
 
         if (newRes.filetype == "PAL") {
             PALFile *pal = new PALFile(newRes.filename, newRes.data);
+            //PALFile *pal = new PALFile(newRes.filename);
+            //pal->saveFile("");
             newRes.handle = static_cast<BaseFile *>(pal);
         } else if (newRes.filetype == "SCR") {
             //std::string bmpFilename = newRes.filename.substr(0, newRes.filename.rfind('.')) + ".BMP";
             //SCRFile *scr = new SCRFile(bmpFilename);
             SCRFile *scr = new SCRFile(newRes.filename, newRes.data);
-            //scr->saveFile("");
+            //scr->saveFile(newRes.filename);
             newRes.handle = static_cast<BaseFile *>(scr);
         } else if (newRes.filetype == "BMP") {
             BMPFile *bmp = new BMPFile(newRes.filename, newRes.data);
-            //bmp->saveFile("");
+            //BMPFile *bmp = new BMPFile(newRes.filename);
+            //std::experimental::filesystem::create_directory(newRes.filename);
+            //bmp->saveFile(newRes.filename);
             newRes.handle = static_cast<BaseFile *>(bmp);
         } else if (newRes.filetype == "TTM") {
             TTMFile *ttm = new TTMFile(newRes.filename, newRes.data);

@@ -20,7 +20,7 @@ protected:
 
 public:
     SCRFile(const std::string &name, v8 &data);
-    explicit SCRFile(const std::string &ppmFilename);
+    explicit SCRFile(const std::string &bmpFilename);
     ~SCRFile();
 
     void saveFile(const std::string &path = "");

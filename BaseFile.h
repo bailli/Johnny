@@ -99,6 +99,7 @@ public:
     static std::string readConstString(v8::iterator &it, u8 length);
 
     static void writeFile(const v8 &data, std::string &name, std::string path = "");
+    static void writeFile(const std::string &data, std::string &name, std::string path = "");
 
     template < typename T > static void readUintLE(std::ifstream *in, T &var);
     template < typename T > static void readUintLE(v8::iterator &it, T &var);

@@ -1,5 +1,9 @@
 #include "BMPFile.h"
 
+#include <experimental/filesystem>
+#include <algorithm>
+namespace fs = std::experimental::filesystem;
+
 SCRANTIC::BMPFile::BMPFile(const std::string &name, v8 &data)
     : CompressedBaseFile(name),
       GraphicBaseFile(),
@@ -47,6 +51,46 @@ SCRANTIC::BMPFile::BMPFile(const std::string &name, v8 &data)
     createOverview();
 }
 
+SCRANTIC::BMPFile::BMPFile(const std::string &path)
+    : CompressedBaseFile(path),
+      GraphicBaseFile(),
+      overview(NULL),
+      ovTexture(NULL) {
+
+    filename = path;
+    std::string basename = path.substr(0, path.rfind('.'));
+    size_t length = basename.size();
+    v8 bitmapData;
+    u16 width, height;
+    std::vector<std::string> filelist;
+
+    for (const auto & entry : fs::directory_iterator(path)) {
+        if (entry.path().filename().string().substr(0, length) == basename) {
+            filelist.push_back(entry.path());
+        }
+    }
+
+    std::sort(filelist.begin(), filelist.end(), [](std::string a, std::string b) { return a < b; });
+
+    for (auto it = filelist.begin(); it != filelist.end(); ++it) {
+        bitmapData = readRGBABitmapData(*it, width, height);
+        std::copy(bitmapData.begin(), bitmapData.end(), std::back_inserter(uncompressedData));
+        widthList.push_back(width);
+        heightList.push_back(height);
+    }
+
+    imageCount = widthList.size();
+
+    size_t z = 0;
+    for (u16 i = 0; i < imageCount; ++i) {
+        SDL_Surface *image = createSdlSurface(uncompressedData, widthList.at(i), heightList.at(i), z);
+        z += widthList.at(i) * heightList.at(i) / 2;
+        imageList.push_back(image);
+    }
+
+    createOverview();
+}
+
 SCRANTIC::BMPFile::~BMPFile() {
     for (auto i = std::begin(imageList); i != std::end(imageList); ++i) {
         SDL_FreeSurface(*i);
@@ -66,12 +110,12 @@ void SCRANTIC::BMPFile::saveFile(const std::string &path) {
         for (size_t j = num.size(); j < 3; ++j) {
             num = "0" + num;
         }
-        std::string newFilename = filename + "." + num + ".BMP";
+
+        std::string newFilename = filename.substr(0, filename.rfind('.') + 1) + num + ".BMP";
 
         SCRANTIC::BaseFile::writeFile(bmpFile, newFilename, path);
     }
 }
-
 
 v8 SCRANTIC::BMPFile::repackIntoResource() {
 
@@ -111,8 +155,6 @@ v8 SCRANTIC::BMPFile::repackIntoResource() {
 
     return rawData;
 }
-
-
 
 SDL_Texture *SCRANTIC::BMPFile::getImage(SDL_Renderer *renderer, u16 num, SDL_Rect &rect) {
     if ((num >= imageList.size()) || (imageList.at(num) == NULL)) {
