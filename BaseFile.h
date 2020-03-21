@@ -11,36 +11,40 @@
 namespace SCRANTIC {
 
 // TTM instructions
-#define CMD_UNK_0080         0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND
-#define CMD_PURGE            0x0110 // still not sure what really gets "purged"
-#define CMD_UPDATE           0x0FF0
-#define CMD_DELAY            0x1020 // how long is delay 0 ?
-#define CMD_SEL_SLOT_IMG     0x1050
-#define CMD_SEL_SLOT_PAL     0x1060
-#define CMD_SET_SCENE_LABEL  0x1100 // called 5 times always before 0xA600 also SET_SCENE_LABEL
-#define CMD_SET_SCENE        0x1110
-#define CMD_UNK_1120         0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image?
-#define CMD_JMP_SCENE        0x1200 // param very often own scene number - not always
-#define CMD_SET_COLOR        0x2000 // Set Bg/Fg color? (once 0xcf 0xcf - mistake?)
-#define CMD_UNK_2010         0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap -- old define CMD_SET_FRAME_1
-#define CMD_UNK_2020         0x2020 // called often in "xyz timer"
-#define CMD_CLIP_REGION      0x4000 // clip region for sprites ATTENTION x1, y1, x2, y2 - not width/height!
-#define CMD_SAVE_IMAGE       0x4200 // save to last image?
-#define CMD_SAVE_IMAGE_NEW   0x4210 // save to new image
-#define CMD_DRAW_PIXEL       0xA000 // draw pixel at x,y
-#define CMD_UNK_A050         0xA050 // called only once in LILIPUTS ROW ASHORE (2: Unkown 0xA050 00c2 007b 00af 008e) freeze part of screen?
-#define CMD_UNK_A060         0xA060 // called only once (5: Unkown 0xA060 00c2 007b 00af 008e) unfreeze screen --- probably wrong
-#define CMD_DRAW_LINE        0xA0A0
-#define CMD_DRAW_RECTANGLE   0xA100 // draw rectangle?! (colors from set frame?!)
-#define CMD_DRAW_ELLIPSE     0xA400
-#define CMD_DRAW_SPRITE      0xA500
-#define CMD_DRAW_SPRITE_MIRROR 0xA520 // mirrored
-#define CMD_CLEAR_RENDERER   0xA600 // param 0/1/2 (count: 6126/673/15) empty sprite list?!
-#define CMD_UNK_B600         0xB600 // called 6 times params: rect + 0x2 + 0x1 ?! -- old define CMD_DRAW_SCREEN
-#define CMD_PLAY_SOUND       0xC050 // not all sounds used?!
-#define CMD_LOAD_SCREEN      0xF010
-#define CMD_LOAD_BITMAP      0xF020
-#define CMD_LOAD_PALETTE     0xF050
+#define CMD_UNK_0080         0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND / no params
+#define CMD_PURGE            0x0110 // still not sure what really gets "purged" / no params
+#define CMD_UPDATE           0x0FF0 // no params
+
+#define CMD_DELAY            0x1020 // how long is delay 0 ? / 1 param: delay
+#define CMD_SEL_SLOT_IMG     0x1050 // 1 param: slot number
+#define CMD_SEL_SLOT_PAL     0x1060 // 1 param: slot number
+#define CMD_SET_SCENE_LABEL  0x1100 // called 5 times always before 0xA600 also SET_SCENE_LABEL / 1 param: scene number
+#define CMD_SET_SCENE        0x1110 // 1 param: scene number
+#define CMD_UNK_1120         0x1120 // always(?) before "Save New Image" parm 0/1 (once 2 - mistake?) does this actually clear the saved image? / 1 param
+#define CMD_JMP_SCENE        0x1200 // param very often own scene number - not always / 1 param scene number
+#define CMD_CLEAR_RENDERER   0xA600 // param 0/1/2 (count: 6126/673/15) empty sprite list?! / 1 param
+#define CMD_PLAY_SOUND       0xC050 // not all sounds used?! / 1 param
+#define CMD_LOAD_SCREEN      0xF010 // 1 string param
+#define CMD_LOAD_BITMAP      0xF020 // 1 string param
+#define CMD_LOAD_PALETTE     0xF050 // 1 string param
+
+#define CMD_SET_COLOR        0x2000 // Set Bg/Fg color? (once 0xcf 0xcf - mistake?) / 2 params fore/background colour
+#define CMD_UNK_2010         0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap -- old define CMD_SET_FRAME_1 / 2 params
+#define CMD_UNK_2020         0x2020 // called often in "xyz timer" / 2 params wait count & delay
+#define CMD_DRAW_PIXEL       0xA000 // draw pixel at x,y / 2 params
+
+#define CMD_CLIP_REGION      0x4000 // clip region for sprites ATTENTION x1, y1, x2, y2 - not width/height! / 4 params
+#define CMD_SAVE_IMAGE       0x4200 // save to last image? / 4 params x,y,w,h
+#define CMD_SAVE_IMAGE_NEW   0x4210 // save to new image / 4 params x,y,w,h
+#define CMD_UNK_A050         0xA050 // called only once in LILIPUTS ROW ASHORE (2: Unkown 0xA050 00c2 007b 00af 008e) freeze part of screen? / 4 params
+#define CMD_UNK_A060         0xA060 // called only once (5: Unkown 0xA060 00c2 007b 00af 008e) unfreeze screen --- probably wrong / 4 params
+#define CMD_DRAW_LINE        0xA0A0 // 4 params
+#define CMD_DRAW_RECTANGLE   0xA100 // draw rectangle?! (colors from set frame?!) / 4 params
+#define CMD_DRAW_ELLIPSE     0xA400 // 4 params
+#define CMD_DRAW_SPRITE      0xA500 // 4 params
+#define CMD_DRAW_SPRITE_MIRROR 0xA520 // mirrored / 4 params
+
+#define CMD_UNK_B600         0xB600 // called 6 times params: rect + 0x2 + 0x1 ?! -- old define CMD_DRAW_SCREEN / 6 params
 
 // ADS instructions
 #define CMD_UNK_1070         0x1070 // called only once before 0x1520 (0x1520 might be third param?)
@@ -103,7 +107,7 @@ public:
 
     template < typename T > static void readUintLE(std::ifstream *in, T &var);
     template < typename T > static void readUintLE(v8::iterator &it, T &var);
-    template < typename T > static std::string hexToString(T t, std::ios_base & (*f)(std::ios_base&));
+    template < typename T > static std::string hexToString(T t, std::ios_base & (*f)(std::ios_base&),int pad = 0);
 
     template < typename T > static void writeUintLE(v8 &data, T &var);
 };
@@ -138,10 +142,17 @@ void SCRANTIC::BaseFile::readUintLE(v8::iterator &it, T &var) {
 }
 
 template <class T>
-std::string SCRANTIC::BaseFile::hexToString(T t, std::ios_base & (*f)(std::ios_base&)) {
+std::string SCRANTIC::BaseFile::hexToString(T t, std::ios_base & (*f)(std::ios_base&), int pad) {
     std::ostringstream oss;
     oss << f << t;
-    return oss.str();
+    if (pad == 0) {
+        return oss.str();
+    }
+    std::string result = oss.str();
+    for (int i = result.size(); i < pad; ++i) {
+        result = "0" + result;
+    }
+    return result;
 }
 
 template < typename T >

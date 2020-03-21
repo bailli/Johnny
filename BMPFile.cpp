@@ -39,8 +39,6 @@ SCRANTIC::BMPFile::BMPFile(const std::string &name, v8 &data)
         return;
     }
 
-    //saveFile(uncompressedData, filename, "res/BMP/");
-
     size_t z = 0;
     for (u16 i = 0; i < imageCount; ++i) {
         SDL_Surface *image = createSdlSurface(uncompressedData, widthList.at(i), heightList.at(i), z);

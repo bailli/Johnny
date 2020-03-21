@@ -4,11 +4,25 @@
 #include "CompressedBaseFile.h"
 
 #include <map>
+#include <set>
 
 namespace SCRANTIC {
 
 class TTMFile : public CompressedBaseFile
 {
+private:
+    std::map<u16, std::string> mnemonics;
+
+    int getParamCount(u16 opcode);
+    u16 getOpcodeFromMnemonic(std::string mnemonic);
+
+    u16 countUpdateInScript();
+
+    void parseRawScript();
+
+    void initMnemonics();
+    std::string getMnemoic(Command c);
+
 protected:
     u32 verSize;
     std::string version;
@@ -24,9 +38,12 @@ protected:
 
 public:
     TTMFile(const std::string &name, v8 &data);
+    TTMFile(const std::string &filename);
     std::vector<Command> getFullScene(u16 num);
     std::string getTag(u16 num);
+    void saveFile(const std::string &path = "");
     bool hasInit();
+    v8 repackIntoResource() override;
 };
 
 }

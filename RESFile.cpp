@@ -80,6 +80,10 @@ SCRANTIC::RESFile::RESFile(const std::string &name)
             newRes.handle = static_cast<BaseFile *>(bmp);
         } else if (newRes.filetype == "TTM") {
             TTMFile *ttm = new TTMFile(newRes.filename, newRes.data);
+            //TTMFile *ttm = new TTMFile(newRes.filename);
+            //v8 data = ttm->repackIntoResource();
+            //TTMFile *ttm2 = new TTMFile(newRes.filename, data);
+            //ttm->saveFile("");
             newRes.handle = static_cast<BaseFile *>(ttm);
         } else if (newRes.filetype == "ADS") {
             ADSFile *ads = new ADSFile(newRes.filename, newRes.data);

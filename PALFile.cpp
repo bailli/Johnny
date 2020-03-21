@@ -41,13 +41,12 @@ SCRANTIC::PALFile::PALFile(const std::string &filename)
 
     in.open(filename, std::ios::in);
     if (!in.is_open()) {
-        std::cerr << "BaseFile: Could not open " << filename << std::endl;
+        std::cerr << "PALFile: Could not open " << filename << std::endl;
         return;
     }
 
     int r,g,b;
     char c1, c2;
-    SDL_Colour colour;
     std::string line;
     palCount = 0;
     u8 a = 0;
