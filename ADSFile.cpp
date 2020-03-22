@@ -13,6 +13,7 @@ SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
     assertString(it, "ADS:");
 
     readUintLE(it, resScrTagSize);
+    readUintLE(it, magic);
 
     assertString(it, "RES:");
 
@@ -211,8 +212,70 @@ SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
 
 }
 
-std::string SCRANTIC::ADSFile::getResource(u16 num)
-{
+v8 SCRANTIC::ADSFile::repackIntoResource() {
+    std::string strings[5] = { "VER:", "ADS:", "RES:", "SCR:", "TAG:" };
+
+    compressionFlag = 2;
+    v8 compressedData = LZCCompress(rawScript);
+    uncompressedSize = rawScript.size();
+    compressedSize = compressedData.size() + 5;
+
+    verSize = version.size() + 1;
+    magic = 0x8000;
+
+    resSize = 0;
+    resCount = resList.size();
+    for (auto it = resList.begin(); it != resList.end(); ++it) {
+        resSize += 2 + it->second.size() + 1;
+    }
+
+    tagCount = tagList.size();
+    tagSize = 0;
+    for (auto it = tagList.begin(); it != tagList.end(); ++it) {
+        tagSize += 2 + it->second.size() + 1;
+    }
+
+    resScrTagSize = tagSize + resSize + compressedSize + 24;
+
+    v8 rawData(strings[0].begin(), strings[0].end());
+    BaseFile::writeUintLE(rawData, verSize);
+    std::copy(version.begin(), version.end(), std::back_inserter(rawData));
+    rawData.push_back(0);
+
+    std::copy(strings[1].begin(), strings[1].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, resScrTagSize);
+    BaseFile::writeUintLE(rawData, magic);
+
+    std::copy(strings[2].begin(), strings[2].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, resSize);
+    BaseFile::writeUintLE(rawData, resCount);
+    for (auto it = resList.begin(); it != resList.end(); ++it) {
+        BaseFile::writeUintLE(rawData, it->first);
+        std::copy(it->second.begin(), it->second.end(), std::back_inserter(rawData));
+        rawData.push_back(0);
+    }
+
+    std::copy(strings[3].begin(), strings[3].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, compressedSize);
+    BaseFile::writeUintLE(rawData, compressionFlag);
+    BaseFile::writeUintLE(rawData, uncompressedSize);
+    std::copy(compressedData.begin(), compressedData.end(), std::back_inserter(rawData));
+    compressedSize -= 5;
+
+    std::copy(strings[4].begin(), strings[4].end(), std::back_inserter(rawData));
+    BaseFile::writeUintLE(rawData, tagSize);
+    BaseFile::writeUintLE(rawData, tagCount);
+
+    for (auto it = tagList.begin(); it != tagList.end(); ++it) {
+        BaseFile::writeUintLE(rawData, it->first);
+        std::copy(it->second.begin(), it->second.end(), std::back_inserter(rawData));
+        rawData.push_back(0);
+    }
+
+    return rawData;
+}
+
+std::string SCRANTIC::ADSFile::getResource(u16 num) {
     auto it = resList.find(num);
     if (it == resList.end()) {
         return "";
@@ -230,8 +293,7 @@ std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getFullMovie(u16 num) {
     }
 }
 
-std::multimap<std::pair<u16, u16>, size_t> SCRANTIC::ADSFile::getMovieLabels(u16 num)
-{
+std::multimap<std::pair<u16, u16>, size_t> SCRANTIC::ADSFile::getMovieLabels(u16 num) {
     std::multimap<u16, std::multimap<std::pair<u16, u16>, size_t> >::iterator it = labels.find(num);
     if (it == labels.end()) {
         return std::multimap<std::pair<u16, u16>, size_t>();

@@ -12,7 +12,8 @@ class ADSFile : public CompressedBaseFile
 protected:
     u32 verSize;
     std::string version;
-    u32 resScrTagSize;
+    u16 resScrTagSize;
+    u16 magic;
     u32 resSize;
     u16 resCount;
     std::map<u16, std::string> resList;
@@ -33,6 +34,8 @@ public:
     std::string getResource(u16 num);
     std::vector<Command> getFullMovie(u16 num);
     std::multimap<std::pair<u16, u16>, size_t> getMovieLabels(u16 num);
+
+    v8 repackIntoResource() override;
 };
 
 }
