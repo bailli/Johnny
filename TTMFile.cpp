@@ -25,9 +25,6 @@ SCRANTIC::TTMFile::TTMFile(const std::string &name, v8 &data)
 
     std::advance(it, compressedSize);
 
-    /*if (!rawScript.size())
-        return;*/
-
     assertString(it, "TTI:");
 
     readUintLE(it, fullTagSize);
@@ -73,7 +70,6 @@ SCRANTIC::TTMFile::TTMFile(const std::string& filename)
     std::string tag;
     std::string mnemonic;
     u16 id, opcode;
-    int align;
     int count;
 
     std::string mode;
@@ -222,7 +218,6 @@ void SCRANTIC::TTMFile::parseRawScript() {
     u16 opcode;
     u16 word, scene;
     u8 length;
-    Command command;
     std::map<u16, std::string>::iterator tagIt;
 
     scene = 0;
@@ -230,9 +225,8 @@ void SCRANTIC::TTMFile::parseRawScript() {
     while (it != rawScript.end()) {
         readUintLE(it, opcode);
         length = (opcode & 0x000F);
+        Command command;
         command.opcode = (opcode & 0xFFF0);
-        command.data.clear();
-        command.name.clear();
 
         if ((command.opcode == CMD_SET_SCENE) || (command.opcode == CMD_SET_SCENE_LABEL)) { // && (length == 1)) // tag
             readUintLE(it, word);
@@ -267,39 +261,7 @@ void SCRANTIC::TTMFile::parseRawScript() {
 
         script[scene].push_back(command);
     }
-
-#ifdef DUMP_TTM
-    std::cout << "Filename: " << filename << std::endl;
-    std::string num;
-
-    for (auto it = tagList.begin(); it != tagList.end(); ++it) {
-        num = hex_to_string(it->first, std::dec);
-        for (int j = num.size(); j < 3; ++j) {
-            num = " " + num;
-        }
-        std::cout << "TAG ID " << num << ": " << it->second << std::endl;
-    }
-
-    std::cout << std::endl;
-
-    for (auto it = script.begin(); it != script.end(); ++it) {
-        std::cout << "Scene number: " << it->first << " - 0x" << hex_to_string(it->first, std::hex) << std::endl;
-
-        for (size_t i = 0; i < it->second.size(); ++i) {
-            num = hex_to_string(i, std::dec);
-            for (int j = num.size(); j < 3; ++j) {
-                num = " " + num;
-            }
-            std::cout << num << ": " << SCRANTIC::BaseFile::commandToString(it->second[i]) << std::endl;
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
-#endif
 }
-
-
 
 void SCRANTIC::TTMFile::saveFile(const std::string &path) {
     std::stringstream output;
@@ -325,6 +287,9 @@ void SCRANTIC::TTMFile::saveFile(const std::string &path) {
         length = (opcode & 0x000F);
         Command command;
         command.opcode = (opcode & 0xFFF0);
+        if (command.opcode == CMD_SET_SCENE || command.opcode == CMD_SET_SCENE_LABEL) {
+            output << "# new scene" << std::endl;
+        }
 
         if (length == 0xF) { //string
             command.name = readString(it);
@@ -340,17 +305,6 @@ void SCRANTIC::TTMFile::saveFile(const std::string &path) {
 
         output << getMnemoic(command) << std::endl;
     }
-    /*for (auto it = script.begin(); it != script.end(); ++it) {
-        output << "# scene begins" << std::endl;
-        for (size_t i = 0; i < it->second.size(); ++i) {
-            if ((it->second[i].opcode == CMD_JMP_SCENE) && (it->second[i].data.size() > 1) && (it->second[i].data.at(1) == 0xFFFF)) {
-                continue;
-            }
-            output << getMnemoic(it->second[i]) << std::endl;
-        }
-        output << "# scene ends" << std::endl;
-    }*/
-
 
     writeFile(output.str(), filename, path);
 }
@@ -458,7 +412,7 @@ std::string SCRANTIC::TTMFile::getMnemoic(SCRANTIC::Command c) {
     return result;
 }
 
-u16 SCRANTIC::TTMFile::getOpcodeFromMnemonic(std::string mnemonic) {
+u16 SCRANTIC::TTMFile::getOpcodeFromMnemonic(std::string &mnemonic) {
     for (auto it = mnemonics.begin(); it != mnemonics.end(); ++it) {
         if (it->second == mnemonic) {
             return it->first;

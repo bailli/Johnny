@@ -14,7 +14,7 @@ private:
     std::map<u16, std::string> mnemonics;
 
     int getParamCount(u16 opcode);
-    u16 getOpcodeFromMnemonic(std::string mnemonic);
+    u16 getOpcodeFromMnemonic(std::string &mnemonic);
 
     u16 countUpdateInScript();
 
@@ -38,7 +38,7 @@ protected:
 
 public:
     TTMFile(const std::string &name, v8 &data);
-    TTMFile(const std::string &filename);
+    explicit TTMFile(const std::string &filename);
     std::vector<Command> getFullScene(u16 num);
     std::string getTag(u16 num);
     void saveFile(const std::string &path = "");
