@@ -3,7 +3,32 @@
 SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
     : CompressedBaseFile(name) {
 
-    v8::iterator it = data.begin();
+    parseFile(data);
+    parseRawScript();
+}
+
+SCRANTIC::ADSFile::ADSFile(const std::string &filename)
+    : CompressedBaseFile(filename) {
+
+    std::ifstream in;
+    in.open(filename, std::ios::binary | std::ios::in);
+    in.unsetf(std::ios::skipws);
+
+    u8 byte;
+    v8 data;
+
+    while (in.read((char*)&byte, 1)) {
+        data.push_back(byte);
+    }
+
+    in.close();
+
+    parseFile(data);
+    parseRawScript();
+}
+
+void SCRANTIC::ADSFile::parseFile(v8 &data) {
+        v8::iterator it = data.begin();
 
     assertString(it, "VER:");
 
@@ -50,12 +75,15 @@ SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
         desc = readString(it);
         tagList.insert(std::pair<u16, std::string>(id, desc));
     }
+}
 
+
+void SCRANTIC::ADSFile::parseRawScript() {
     if (!rawScript.size()) {
         return;
     }
 
-    it = rawScript.begin();
+    v8::iterator it = rawScript.begin();
 
     u16 word, word2, movie, leftover;
     Command command;
@@ -209,8 +237,8 @@ SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
     }
 
     labels.insert(std::make_pair(movie, currentLabels));
-
 }
+
 
 v8 SCRANTIC::ADSFile::repackIntoResource() {
     std::string strings[5] = { "VER:", "ADS:", "RES:", "SCR:", "TAG:" };
@@ -223,14 +251,14 @@ v8 SCRANTIC::ADSFile::repackIntoResource() {
     verSize = version.size() + 1;
     magic = 0x8000;
 
-    resSize = 0;
+    resSize = 2;
     resCount = resList.size();
     for (auto it = resList.begin(); it != resList.end(); ++it) {
         resSize += 2 + it->second.size() + 1;
     }
 
     tagCount = tagList.size();
-    tagSize = 0;
+    tagSize = 2;
     for (auto it = tagList.begin(); it != tagList.end(); ++it) {
         tagSize += 2 + it->second.size() + 1;
     }
@@ -271,6 +299,8 @@ v8 SCRANTIC::ADSFile::repackIntoResource() {
         std::copy(it->second.begin(), it->second.end(), std::back_inserter(rawData));
         rawData.push_back(0);
     }
+
+    SCRANTIC::BaseFile::writeFile(rawData, filename, "tmp/");
 
     return rawData;
 }

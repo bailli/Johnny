@@ -90,7 +90,7 @@ protected:
 
 public:
     explicit BaseFile(const std::string &name);
-    ~BaseFile();
+    virtual ~BaseFile();
 
     std::string filename;
     static std::string commandToString(Command cmd, bool ads = false);
@@ -110,6 +110,7 @@ public:
     template < typename T > static std::string hexToString(T t, std::ios_base & (*f)(std::ios_base&),int pad = 0);
 
     template < typename T > static void writeUintLE(v8 &data, T &var);
+    template < typename T > static void writeUintLE(std::ofstream *out, T &var);
 };
 
 }
@@ -163,5 +164,20 @@ void SCRANTIC::BaseFile::writeUintLE(v8 &data, T &var) {
     }
 }
 
+template < typename T >
+void SCRANTIC::BaseFile::writeUintLE(std::ofstream *out, T &var) {
+    if (!out->is_open()) {
+        return;
+    }
+
+    size_t size = sizeof(var);
+    u8 byte;
+    var = 0;
+
+    for (u8 i = 0; i < size; ++i) {
+        out->write((char*)&byte, 1);
+        var |= (byte << (i * 8));
+    }
+}
 
 #endif // BASEFILE_H

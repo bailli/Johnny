@@ -55,8 +55,12 @@ SCRANTIC::BMPFile::BMPFile(const std::string &path)
       overview(NULL),
       ovTexture(NULL) {
 
-    filename = path;
-    std::string basename = path.substr(0, path.rfind('.'));
+    std::string basename = filename;
+    size_t pos = basename.rfind("/");
+    if (pos != std::string::npos) {
+        basename = basename.substr(pos+1);
+    }
+    basename = basename.substr(0, basename.rfind('.'));
     size_t length = basename.size();
     v8 bitmapData;
     u16 width, height;

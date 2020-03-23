@@ -171,7 +171,7 @@ v8 SCRANTIC::TTMFile::repackIntoResource() {
     pagSize = 2;
     pag = countUpdateInScript();
 
-    tagSize = 0;
+    tagSize = 2;
     for (auto it = tagList.begin(); it != tagList.end(); ++it) {
         tagSize += 2 + it->second.size() + 1;
     }
@@ -208,6 +208,8 @@ v8 SCRANTIC::TTMFile::repackIntoResource() {
         std::copy(it->second.begin(), it->second.end(), std::back_inserter(rawData));
         rawData.push_back(0);
     }
+
+    SCRANTIC::BaseFile::writeFile(rawData, filename, "tmp/");
 
     return rawData;
 }

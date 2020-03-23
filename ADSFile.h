@@ -9,6 +9,10 @@ namespace SCRANTIC {
 
 class ADSFile : public CompressedBaseFile
 {
+private:
+    void parseRawScript();
+    void parseFile(v8 &data);
+
 protected:
     u32 verSize;
     std::string version;
@@ -31,6 +35,7 @@ public:
     std::map<u16, std::string> tagList;
 
     ADSFile(const std::string &name, v8 &data);
+    explicit ADSFile(const std::string &filename);
     std::string getResource(u16 num);
     std::vector<Command> getFullMovie(u16 num);
     std::multimap<std::pair<u16, u16>, size_t> getMovieLabels(u16 num);

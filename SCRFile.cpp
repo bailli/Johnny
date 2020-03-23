@@ -64,8 +64,9 @@ SCRANTIC::SCRFile::SCRFile(const std::string &bmpFilename)
       image(NULL),
       texture(NULL) {
 
-    uncompressedData = readRGBABitmapData(filename, width, height);
-    filename = bmpFilename.substr(0, bmpFilename.rfind('.')) + ".SCR";
+    std::string actualFilename = bmpFilename.substr(0, bmpFilename.rfind('.')) + ".BMP";
+
+    uncompressedData = readRGBABitmapData(actualFilename, width, height);
 
     image = createSdlSurface(uncompressedData, width, height);
 }
