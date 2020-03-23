@@ -300,8 +300,6 @@ v8 SCRANTIC::ADSFile::repackIntoResource() {
         rawData.push_back(0);
     }
 
-    SCRANTIC::BaseFile::writeFile(rawData, filename, "tmp/");
-
     return rawData;
 }
 

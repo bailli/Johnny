@@ -7,8 +7,10 @@
 
 #include <experimental/filesystem>
 
-SCRANTIC::RESFile::RESFile(const std::string &name)
+SCRANTIC::RESFile::RESFile(const std::string &name, bool readFromFile)
     : BaseFile(name) {
+
+    std::string path = "resources/";
 
     std::ifstream in;
     in.open(filename, std::ios::binary | std::ios::in);
@@ -38,13 +40,15 @@ SCRANTIC::RESFile::RESFile(const std::string &name)
 
     readUintLE(&in, resCount);
 
-    u32 blob, offset;
+    u32 offset;
+    u16 blob1, blob2;
     resource newRes;
 
     for (u16 i = 0; i < resCount; ++i) {
         newRes.data.clear();
         newRes.handle = NULL;
-        readUintLE(&in, blob);
+        readUintLE(&in, blob1);
+        readUintLE(&in, blob2);
         readUintLE(&in, offset);
 
         res.seekg(offset, std::ios::beg);
@@ -52,7 +56,8 @@ SCRANTIC::RESFile::RESFile(const std::string &name)
         newRes.num = i;
         newRes.filename = readString(&res, 12);
         newRes.filetype = newRes.filename.substr(newRes.filename.rfind('.')+1);
-        newRes.blob = blob;
+        newRes.blob1 = blob1;
+        newRes.blob2 = blob2;
         newRes.offset = offset;
         readUintLE(&res, newRes.size);
 
@@ -62,43 +67,86 @@ SCRANTIC::RESFile::RESFile(const std::string &name)
         }
 
         if (newRes.filetype == "PAL") {
-            PALFile *pal = new PALFile(newRes.filename, newRes.data);
-            //PALFile *pal = new PALFile(newRes.filename);
-            //pal->saveFile("");
-            newRes.handle = static_cast<BaseFile *>(pal);
+            PALFile *resfile = readFromFile ?
+                               new PALFile(path + newRes.filename) :
+                               new PALFile(newRes.filename, newRes.data);
+            newRes.handle = static_cast<BaseFile *>(resfile);
         } else if (newRes.filetype == "SCR") {
-            //std::string bmpFilename = newRes.filename.substr(0, newRes.filename.rfind('.')) + ".BMP";
-            //SCRFile *scr = new SCRFile(bmpFilename);
-            SCRFile *scr = new SCRFile(newRes.filename, newRes.data);
-            //scr->saveFile(newRes.filename);
-            newRes.handle = static_cast<BaseFile *>(scr);
+            SCRFile *resfile = readFromFile ?
+                               new SCRFile(path + newRes.filename) :
+                               new SCRFile(newRes.filename, newRes.data);
+            newRes.handle = static_cast<BaseFile *>(resfile);
         } else if (newRes.filetype == "BMP") {
-            BMPFile *bmp = new BMPFile(newRes.filename, newRes.data);
-            //BMPFile *bmp = new BMPFile(newRes.filename);
-            //std::experimental::filesystem::create_directory(newRes.filename);
-            //bmp->saveFile(newRes.filename);
-            newRes.handle = static_cast<BaseFile *>(bmp);
+            BMPFile *resfile = readFromFile ?
+                               new BMPFile(path + newRes.filename) :
+                               new BMPFile(newRes.filename, newRes.data);
+            newRes.handle = static_cast<BaseFile *>(resfile);
         } else if (newRes.filetype == "TTM") {
-            TTMFile *ttm = new TTMFile(newRes.filename, newRes.data);
-            //TTMFile *ttm = new TTMFile(newRes.filename);
-            //v8 data = ttm->repackIntoResource();
-            //TTMFile *ttm2 = new TTMFile(newRes.filename, data);
-            //ttm->saveFile("");
-            newRes.handle = static_cast<BaseFile *>(ttm);
+            TTMFile *resfile = readFromFile ?
+                               new TTMFile(path + newRes.filename) :
+                               new TTMFile(newRes.filename, newRes.data);
+            newRes.handle = static_cast<BaseFile *>(resfile);
         } else if (newRes.filetype == "ADS") {
-            ADSFile *ads = new ADSFile(newRes.filename, newRes.data);
-            newRes.handle = static_cast<BaseFile *>(ads);
+            ADSFile *resfile = readFromFile ?
+                               new ADSFile(path + newRes.filename) :
+                               new ADSFile(newRes.filename, newRes.data);
+            newRes.handle = static_cast<BaseFile *>(resfile);
             ADSFiles.push_back(newRes.filename);
         }
 
         resourceMap.insert(std::pair<u8, SCRANTIC::resource>(i, newRes));
-
-        //saveFile(newRes.data, newRes.filename, "res/");
     }
 
     res.close();
     in.close();
 }
+
+void SCRANTIC::RESFile::saveNewResource(const std::string &path) {
+
+    v8 data;
+    v8 resFile;
+
+    for (int i = 0; i < 6; ++i) {
+        data.push_back(header[i]);
+    }
+
+    std::copy(resFilename.begin(), resFilename.end(), std::back_inserter(data));
+    for (size_t i = resFilename.size(); i < 13; ++i) {
+        data.push_back(0);
+    }
+
+    writeUintLE(data, resCount);
+
+    u32 offset = 0;
+    u32 newSize;
+
+    for (u16 i = 0; i < resCount; ++i) {
+        resource currentResource = resourceMap[i];
+        writeUintLE(data, currentResource.blob1);
+        writeUintLE(data, currentResource.blob2);
+        writeUintLE(data, offset);
+
+        v8 newData;
+        if (currentResource.filetype == "VIN") {
+            newData = currentResource.data;
+         } else {
+             newData = (currentResource.handle)->repackIntoResource();
+         }
+
+        std::copy(currentResource.filename.begin(), currentResource.filename.end(), std::back_inserter(resFile));
+        for (size_t i = currentResource.filename.size(); i < 13; ++i) {
+            resFile.push_back(0);
+        }
+        newSize = newData.size();
+        writeUintLE(resFile, newSize);
+        std::copy(newData.begin(), newData.end(), std::back_inserter(resFile));
+        offset += newSize + 17;
+    }
+
+    SCRANTIC::BaseFile::writeFile(data, filename, path);
+    SCRANTIC::BaseFile::writeFile(resFile, resFilename, path);
+}
+
 
 SCRANTIC::RESFile::~RESFile() {
     for (auto i = std::begin(resourceMap); i != std::end(resourceMap); ++i) {
