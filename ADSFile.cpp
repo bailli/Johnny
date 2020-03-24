@@ -3,6 +3,7 @@
 SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
     : CompressedBaseFile(name) {
 
+    initMnemonics();
     parseFile(data);
     parseRawScript();
 }
@@ -10,25 +11,112 @@ SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
 SCRANTIC::ADSFile::ADSFile(const std::string &filename)
     : CompressedBaseFile(filename) {
 
+    initMnemonics();
+
     std::ifstream in;
-    in.open(filename, std::ios::binary | std::ios::in);
-    in.unsetf(std::ios::skipws);
 
-    u8 byte;
-    v8 data;
+    in.open(filename, std::ios::in);
+    if (!in.is_open()) {
+        std::cerr << "ADSFile: Could not open " << filename << std::endl;
+        return;
+    }
 
-    while (in.read((char*)&byte, 1)) {
-        data.push_back(byte);
+    u16 i, j, k, l;
+
+    std::string line;
+    std::string tag;
+    std::string mnemonic;
+    u16 id, opcode;
+    int count;
+
+    std::string mode;
+
+    while (getline(in, line)) {
+        if (line.substr(0, 1) == "#" || line == "") {
+            continue;
+        }
+
+        if (line == "VERSION") {
+            getline(in, line);
+            version = line;
+            continue;
+        }
+
+        if (line == "RESOURCES") {
+            mode = line;
+            continue;
+        }
+
+        if (line == "TAGS") {
+            mode = line;
+            continue;
+        }
+
+        if (line == "SCRIPT") {
+            mode = line;
+            continue;
+        }
+
+        if (mode == "RESOURCES") {
+            std::istringstream iss(line);
+            if (!(iss >> std::hex >> id)) {
+                break;
+            }
+            tag = line.substr(line.find(" ")+1);
+            resList.insert({id, tag});
+        } if (mode == "TAGS") {
+            std::istringstream iss(line);
+            if (!(iss >> std::hex >> id)) {
+                break;
+            }
+            tag = line.substr(line.find(" ")+1);
+            tagList.insert({id, tag});
+        }  else if (mode == "SCRIPT") {
+            mnemonic = line.substr(0, line.find(" "));
+            opcode = getOpcodeFromMnemonic(mnemonic);
+            count = getParamCount(opcode);
+
+            if (opcode != CMD_SET_SCENE) {
+                writeUintLE(rawScript, opcode);
+            }
+
+            std::istringstream iss(line);
+            switch (count) {
+            case 1:
+                iss >> mnemonic >> std::hex >> i;
+                writeUintLE(rawScript, i);
+                break;
+            case 2:
+                iss >> mnemonic >> std::hex >> i >> j;
+                writeUintLE(rawScript, i);
+                writeUintLE(rawScript, j);
+                break;
+            case 3:
+                iss >> mnemonic >> std::hex >> i >> j >> k;
+                writeUintLE(rawScript, i);
+                writeUintLE(rawScript, j);
+                writeUintLE(rawScript, k);
+                break;
+            case 4:
+                iss >> mnemonic >> std::hex >> i >> j >> k >> l;
+                writeUintLE(rawScript, i);
+                writeUintLE(rawScript, j);
+                writeUintLE(rawScript, k);
+                writeUintLE(rawScript, l);
+                break;
+            default:
+                break;
+            }
+        }
     }
 
     in.close();
 
-    parseFile(data);
     parseRawScript();
 }
 
 void SCRANTIC::ADSFile::parseFile(v8 &data) {
-        v8::iterator it = data.begin();
+    v8::iterator it = data.begin();
 
     assertString(it, "VER:");
 
@@ -61,9 +149,6 @@ void SCRANTIC::ADSFile::parseFile(v8 &data) {
     }
 
     std::advance(it, compressedSize);
-
-    /*if (!rawScript.size())
-        return;*/
 
     assertString(it, "TAG:");
 
@@ -327,4 +412,143 @@ std::multimap<std::pair<u16, u16>, size_t> SCRANTIC::ADSFile::getMovieLabels(u16
         return std::multimap<std::pair<u16, u16>, size_t>();
     }
     return it->second;
+}
+
+void SCRANTIC::ADSFile::saveFile(const std::string &path) {
+    std::stringstream output;
+
+    output << "# SCRANTIC ADS file" << std::endl;
+    output << "VERSION" << std::endl;
+    output << version << std::endl << std::endl;
+
+    output << "RESOURCES" << std::endl;
+    for (auto it = resList.begin(); it != resList.end(); ++it) {
+        output << hexToString(it->first, std::hex, 4) << " " << it->second << std::endl;
+    }
+
+    output << std::endl << "TAGS" << std::endl;
+    for (auto it = tagList.begin(); it != tagList.end(); ++it) {
+        output << hexToString(it->first, std::hex, 4) << " " << it->second << std::endl;
+    }
+
+    output << std::endl << "SCRIPT" << std::endl;
+
+    v8::iterator it = rawScript.begin();
+    u16 opcode;
+    u8 length;
+    u16 word;
+
+    while (it != rawScript.end()) {
+        readUintLE(it, opcode);
+        Command command;
+
+        if (opcode <= 0x100) {
+            output << "# new movie" << std::endl;
+            command.opcode = CMD_SET_SCENE;
+            command.data.push_back(opcode);
+        } else {
+            length = getParamCount(opcode);
+            command.opcode = opcode;
+            for (u8 i = 0; i < length; ++i) {
+                readUintLE(it, word);
+                command.data.push_back(word);
+            }
+        }
+
+        output << getMnemoic(command) << std::endl;
+    }
+
+    writeFile(output.str(), filename, path);
+}
+
+
+void SCRANTIC::ADSFile::initMnemonics() {
+    // fake
+    mnemonics.insert({CMD_SET_SCENE, "SCENE"});
+    //no params
+    mnemonics.insert({CMD_OR_SKIP, "OR"});
+    mnemonics.insert({CMD_OR, "AND"});
+    mnemonics.insert({CMD_PLAY_MOVIE, "PLAYMOVIE"});
+    mnemonics.insert({CMD_UNK_1520, "UNK1520"});
+    mnemonics.insert({CMD_RANDOM_START, "RANDSTART"});
+    mnemonics.insert({CMD_RANDOM_END, "RANDEND"});
+    mnemonics.insert({CMD_UNK_4000, "UNK4000"});
+    mnemonics.insert({CMD_UNK_F010, "UNKF010"});
+    mnemonics.insert({CMD_UNK_FFFF, "UNKFFFF"});
+    //1 param
+    mnemonics.insert({CMD_PLAY_ADS_MOVIE, "PLAYADS"});
+    mnemonics.insert({CMD_UNK_3020, "UNK3020"});
+    //2 params
+    mnemonics.insert({CMD_UNK_1070, "UNK1070"});
+    mnemonics.insert({CMD_ADD_INIT_TTM, "INITTTM"});
+    mnemonics.insert({CMD_TTM_LABEL, "CONTINUEAFTER"});
+    mnemonics.insert({CMD_SKIP_IF_LAST, "SKIPAFTER"});
+    mnemonics.insert({CMD_UNK_1370, "UNK1370"});
+    //3 params
+    mnemonics.insert({CMD_KILL_TTM, "KILLTTM"});
+    //4 params
+    mnemonics.insert({CMD_ADD_TTM, "ADDTTM"});
+}
+
+
+std::string SCRANTIC::ADSFile::getMnemoic(SCRANTIC::Command c) {
+    std::string result = mnemonics[c.opcode];
+
+    int count = getParamCount(c.opcode);
+
+    if (!count) {
+        return result;
+    }
+
+    for (int i = 0; i < count; ++i) {
+        std::string data = hexToString(c.data.at(i), std::hex, 4);
+        result += " " + data;
+    }
+
+    return result;
+}
+
+u16 SCRANTIC::ADSFile::getOpcodeFromMnemonic(std::string &mnemonic) {
+    for (auto it = mnemonics.begin(); it != mnemonics.end(); ++it) {
+        if (it->second == mnemonic) {
+            return it->first;
+        }
+    }
+    return 0;
+}
+
+
+int SCRANTIC::ADSFile::getParamCount(u16 opcode) {
+    switch (opcode) {
+    case CMD_OR_SKIP:
+    case CMD_OR:
+    case CMD_PLAY_MOVIE:
+    case CMD_UNK_1520:
+    case CMD_RANDOM_START:
+    case CMD_RANDOM_END:
+    case CMD_UNK_4000:
+    case CMD_UNK_F010:
+    case CMD_UNK_FFFF:
+        return 0;
+    case CMD_SET_SCENE: // beware fake
+    case CMD_PLAY_ADS_MOVIE:
+    case CMD_UNK_3020:
+        return 1;
+    case CMD_UNK_1070:
+    case CMD_ADD_INIT_TTM:
+    case CMD_TTM_LABEL:
+    case CMD_SKIP_IF_LAST:
+    case CMD_UNK_1370:
+        return 2;
+    case CMD_KILL_TTM:
+        return 3;
+    case CMD_ADD_TTM:
+        return 4;
+    default:
+        if (opcode <= 0x100) {
+            return 1; // CMD_SET_SCENE
+        }
+        std::cerr << "Unkown command found: " << opcode << std::endl;
+        return 0;
+    }
 }

@@ -13,6 +13,13 @@ private:
     void parseRawScript();
     void parseFile(v8 &data);
 
+    std::map<u16, std::string> mnemonics;
+
+    int getParamCount(u16 opcode);
+    u16 getOpcodeFromMnemonic(std::string &mnemonic);
+    void initMnemonics();
+    std::string getMnemoic(Command c);
+
 protected:
     u32 verSize;
     std::string version;
@@ -41,6 +48,7 @@ public:
     std::multimap<std::pair<u16, u16>, size_t> getMovieLabels(u16 num);
 
     v8 repackIntoResource() override;
+    void saveFile(const std::string &path = "");
 };
 
 }
