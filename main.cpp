@@ -6,6 +6,8 @@
 #include "BMPFile.h"
 #include "Robinson.h"
 
+#include "CommandlineParser.h"
+
 #ifdef WIN32
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -21,6 +23,8 @@ using namespace std;
 SDL_Window *g_Mainwindow = NULL;
 SDL_Renderer *g_Renderer = NULL;
 TTF_Font *g_Font = NULL;
+std::string g_path = "";
+bool g_readUnpackedRes = false;
 
 void cleanup() {
     if (g_Renderer != NULL) {
@@ -91,14 +95,69 @@ bool init() {
     return true;
 }
 
-int main() {
+bool handleCommandline(char **begin, char **end) {
+
+    CommandlineParser commandlineParser(begin, end);
+
+    std::string path = "";
+    std::string outputPath = "";
+    std::string prepackedPath = "";
+
+    if (commandlineParser.cmdOptionExists("--resourcePath")) {
+        path = commandlineParser.getCmdOption("--resourcePath");
+        if (path.substr(path.size() - 1) != "/") {
+            path += "/";
+        }
+        g_path = path;
+    }
+
+    if (commandlineParser.cmdOptionExists("--outputPath")) {
+        outputPath = commandlineParser.getCmdOption("--outputPath");
+        if (outputPath.substr(outputPath.size() - 1) != "/") {
+            outputPath += "/";
+        }
+    }
+
+    if (commandlineParser.cmdOptionExists("--prepackedPath")) {
+        prepackedPath = commandlineParser.getCmdOption("--prepackedPath");
+        if (prepackedPath.substr(prepackedPath.size() - 1) != "/") {
+            prepackedPath += "/";
+        }
+    }
+
+    if (commandlineParser.cmdOptionExists("--unpack")) {
+        bool onlyFiles = commandlineParser.cmdOptionExists("--onlyFiles");
+        SCRANTIC::RESFile res(path + "RESOURCE.MAP", false);
+        res.unpackResources(outputPath, onlyFiles);
+        return true;
+    }
+
+    if (commandlineParser.cmdOptionExists("--repack")) {
+        SCRANTIC::RESFile res(path + "RESOURCE.MAP", true);
+        res.repackResources(outputPath, prepackedPath);
+        return true;
+    }
+
+    if (commandlineParser.cmdOptionExists("--unpackedResources")) {
+        std::cout << "Unpacked resources will be read from " << path << std::endl;
+        g_readUnpackedRes = true;
+    }
+
+    return false;
+}
+
+int main(int argc, char **argv) {
+    if (handleCommandline(argv, argv + argc)) {
+        return 0;
+    }
+
     if (!init()) {
         std::cerr << "Error in init()!" << std::endl;
         return 1;
     }
 
     cout << "Hello Johnny's World!" << endl;
-    SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson("RESOURCE.MAP", "SCRANTIC.SCR");
+    SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson(g_path + "RESOURCE.MAP", g_path + "SCRANTIC.SCR", g_readUnpackedRes);
 
     crusoe->initRenderer(g_Renderer);
     crusoe->initMenu(g_Font);

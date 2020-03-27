@@ -2,14 +2,35 @@
 
 #include <sstream>
 
-SCRANTIC::BaseFile::BaseFile(const std::string &name)
-    : filename(name) {
+SCRANTIC::BaseFile::BaseFile(const std::string &name) :
+    filename(name) {
 
+    size_t pos = filename.rfind('/');
+    if (pos != std::string::npos) {
+        filename = filename.substr(pos+1);
+    }
 }
 
 SCRANTIC::BaseFile::~BaseFile() {
 
 }
+
+v8 SCRANTIC::BaseFile::readFile(const std::string &filename) {
+    std::ifstream in;
+    in.open(filename, std::ios::binary | std::ios::in);
+    in.unsetf(std::ios::skipws);
+
+    u8 byte;
+    v8 data;
+
+    while (in.read((char*)&byte, 1)) {
+        data.push_back(byte);
+    }
+
+    in.close();
+    return data;
+}
+
 
 std::string SCRANTIC::BaseFile::readString(std::ifstream *in, u8 length, char delimiter) {
     if (!in->is_open()) {
@@ -125,7 +146,7 @@ void SCRANTIC::BaseFile::writeFile(const std::vector<u8> &data, std::string &nam
 }
 
 void SCRANTIC::BaseFile::writeFile(const std::string &data, std::string &name, std::string path) {
-        std::ofstream out;
+    std::ofstream out;
 
     if (path.length() && (path[path.length()-1] != '/')) {
         path += "/";

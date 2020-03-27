@@ -11,7 +11,7 @@
 namespace SCRANTIC {
 
 // TTM instructions
-#define CMD_UNK_0080         0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND / no params
+#define CMD_UNK_0080         0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND / no params => seems right
 #define CMD_PURGE            0x0110 // still not sure what really gets "purged" / no params
 #define CMD_UPDATE           0x0FF0 // no params
 
@@ -42,9 +42,11 @@ namespace SCRANTIC {
 #define CMD_DRAW_RECTANGLE   0xA100 // draw rectangle?! (colors from set frame?!) / 4 params
 #define CMD_DRAW_ELLIPSE     0xA400 // 4 params
 #define CMD_DRAW_SPRITE      0xA500 // 4 params
+//#define CMD_DRAW_SPRITE_VMIRROR 0xA510 // 4 params
 #define CMD_DRAW_SPRITE_MIRROR 0xA520 // mirrored / 4 params
+//#define CMD_DRAW_SPRITE_HVMIRROR 0xA510 // 4 params ?
 
-#define CMD_UNK_B600         0xB600 // called 6 times params: rect + 0x2 + 0x1 ?! -- old define CMD_DRAW_SCREEN / 6 params
+#define CMD_UNK_B600         0xB600 // called 6 times params: rect + 0x2 +  0x1 ?! -- old define CMD_DRAW_SCREEN / 6 params
 
 // ADS instructions
 #define CMD_UNK_1070         0x1070 // called only once before 0x1520 (0x1520 might be third param?)
@@ -54,19 +56,19 @@ namespace SCRANTIC {
 #define CMD_TTM_LABEL        0x1350 // more like "do while ttm/scene last played"
                                     // play the following only, but always, after res/scene
 #define CMD_SKIP_IF_LAST     0x1360 // this seems like an actual skip if res/scene was lastplayed
-#define CMD_UNK_1370         0x1370 // 2 Params: TTM and Scene ?
+#define CMD_UNK_1370         0x1370 // 2 Params: TTM and Scene ? ==> Jump here when TTM/Scene **starts**
 #define CMD_OR_SKIP          0x1420 // always after/between SKIPNEXT2  OR condition FOR CMD_SKIP_NEXT_IF_2 ?
 #define CMD_OR               0x1430 // already attached to CMD_COND_MOVIE
 #define CMD_PLAY_MOVIE       0x1510 // play one movie from rand list OR play movie list
 #define CMD_UNK_1520         0x1520 // only called once
                                     // no params; Add TTM follows 2005 0004 0016 0000 0001
-#define CMD_ADD_TTM          0x2005 // $1: res $2: scene $3: ??? $4: repeat --- does no longer force init scene 0
+#define CMD_ADD_TTM          0x2005 // $1: res $2: scene $3: repeat $4: ??? --- does no longer force init scene 0
 #define CMD_KILL_TTM         0x2010 // kill TTM
 #define CMD_RANDOM_START     0x3010 // add following movies to random list
-#define CMD_UNK_3020         0x3020 // params 5 (with "Set Frame")/2 (once with 1 TTM)/1 (4x with 3 TTM) -- old define CMD_RANDOM_UNKNOWN_1
+#define CMD_UNK_3020         0x3020 // params 5 (with "Set Frame")/2 (once with 1 TTM)/1 (4x with 3 TTM) -- old define CMD_RANDOM_UNKNOWN_1  ==> random chance that no ttm will be selected?
 #define CMD_RANDOM_END       0x30FF // rand list end
 #define CMD_UNK_4000         0x4000 // called 4 times - 2x at "end"
-#define CMD_UNK_F010          0xF010 // called 67 times
+#define CMD_UNK_F010          0xF010 // called 67 times ==> 0xF010 0xFFFF end current script
 #define CMD_PLAY_ADS_MOVIE   0xF200 //  0: Select Scene 0001 MUN. AMB. POS.A  SW
                                     //  1: Unkown 0xF200 000e <-- play movie no. 0x000e ?
 #define CMD_UNK_FFFF         0xFFFF // Part of Command "0xF010?
@@ -104,6 +106,8 @@ public:
 
     static void writeFile(const v8 &data, std::string &name, std::string path = "");
     static void writeFile(const std::string &data, std::string &name, std::string path = "");
+
+    static v8 readFile(const std::string &filename);
 
     template < typename T > static void readUintLE(std::ifstream *in, T &var);
     template < typename T > static void readUintLE(v8::iterator &it, T &var);

@@ -155,18 +155,7 @@ v8 SCRANTIC::GraphicBaseFile::createRGBABitmapData(v8 &data, u16 width, u16 heig
 
 
 v8 SCRANTIC::GraphicBaseFile::readRGBABitmapData(const std::string &filename, u16 &width, u16 &height) {
-    std::ifstream in;
-    in.open(filename, std::ios::binary | std::ios::in);
-    in.unsetf(std::ios::skipws);
-
-    u8 byte;
-    v8 data;
-
-    while (in.read((char*)&byte, 1)) {
-        data.push_back(byte);
-    }
-
-    in.close();
+    v8 data = BaseFile::readFile(filename);
 
     v8 scrData;
 
@@ -217,6 +206,7 @@ v8 SCRANTIC::GraphicBaseFile::readRGBABitmapData(const std::string &filename, u1
     SDL_Color color;
     i8 palIndex;
     bool high = false;
+    u8 byte;
 
     for (i32 i = height - 1; i >= 0; --i) {
         for (u16 j = 0; j < width; ++j) {

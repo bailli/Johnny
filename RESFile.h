@@ -19,6 +19,10 @@ struct resource {
 };
 
 class RESFile : public BaseFile {
+private:
+    void readFromRes(const std::string &path);
+    void readFromFiles(const std::string &path);
+
 protected:
     v8 header;
     u16 resCount;
@@ -32,7 +36,8 @@ public:
     std::vector<std::string> ADSFiles;
     BaseFile *getResource(const std::string &name);
 
-    void saveNewResource(const std::string &path = "resources/");
+    void repackResources(const std::string &path, const std::string &prepackedPath);
+    void unpackResources(const std::string &path, bool onlyFiles = false);
 };
 
 }

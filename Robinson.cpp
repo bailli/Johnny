@@ -11,7 +11,7 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #endif
 
-SCRANTIC::Robinson::Robinson(const std::string &ResMap, const std::string &ScrExe)
+SCRANTIC::Robinson::Robinson(const std::string &ResMap, const std::string &ScrExe, bool readUnpacked)
     : res(NULL),
       audioPlayer(NULL),
       renderMenu(false),
@@ -42,7 +42,7 @@ SCRANTIC::Robinson::Robinson(const std::string &ResMap, const std::string &ScrEx
 
     std::cout << "--------------- Hello from Robinson Crusoe!---------------" << std::endl;
 
-    res = new RESFile(ResMap);
+    res = new RESFile(ResMap, readUnpacked);
     audioPlayer = new RIFFPlayer(ScrExe);
 
     std::srand(std::time(0));
