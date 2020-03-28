@@ -310,6 +310,22 @@ SCRANTIC::RESFile::~RESFile() {
     }
 }
 
+
+SDL_Color* SCRANTIC::RESFile::setPaletteForAllGraphicResources(const std::string &palFile) {
+    PALFile *pal = static_cast<PALFile *>(getResource(palFile));
+
+    for (auto it = resourceMap.begin(); it != resourceMap.end(); ++it) {
+        if (it->second.filetype == "BMP") {
+            static_cast<BMPFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
+        } else if (it->second.filetype == "SCR") {
+            static_cast<SCRFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
+        }
+    }
+
+    return pal->getPalette();
+}
+
+
 SCRANTIC::BaseFile *SCRANTIC::RESFile::getResource(const std::string &name) {
     for (auto i = std::begin(resourceMap); i != std::end(resourceMap); ++i) {
         if (i->second.filename == name) {

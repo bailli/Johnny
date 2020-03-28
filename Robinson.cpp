@@ -47,15 +47,7 @@ SCRANTIC::Robinson::Robinson(const std::string &ResMap, const std::string &ScrEx
 
     std::srand(std::time(0));
 
-    PALFile *pal = static_cast<PALFile *>(res->getResource("JOHNCAST.PAL"));
-    for (auto it = res->resourceMap.begin(); it != res->resourceMap.end(); ++it) {
-        if (it->second.filetype == "BMP") {
-            static_cast<BMPFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
-        } else if (it->second.filetype == "SCR") {
-            static_cast<SCRFile *>(it->second.handle)->setPalette(pal->getPalette(), 256);
-        }
-    }
-    palette = pal->getPalette();
+    palette = res->setPaletteForAllGraphicResources("JOHNCAST.PAL");
 
 #ifdef DUMP_ADS
     std::string adsstring;

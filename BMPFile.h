@@ -27,7 +27,7 @@ public:
     explicit BMPFile(const std::string &path);
     ~BMPFile();
 
-    void saveFile(const std::string &path);
+    void saveFile(const std::string &path) override;
     v8 repackIntoResource() override;
 
     SDL_Texture *getImage(SDL_Renderer *renderer, u16 num, SDL_Rect &rect);

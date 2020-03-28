@@ -39,11 +39,14 @@ protected:
 public:
     TTMFile(const std::string &name, v8 &data);
     explicit TTMFile(const std::string &filename);
+
     std::vector<Command> getFullScene(u16 num);
     std::string getTag(u16 num);
-    void saveFile(const std::string &path = "");
     bool hasInit();
+
+    void saveFile(const std::string &path) override;
     v8 repackIntoResource() override;
+
 };
 
 }

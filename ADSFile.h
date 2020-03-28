@@ -48,7 +48,7 @@ public:
     std::multimap<std::pair<u16, u16>, size_t> getMovieLabels(u16 num);
 
     v8 repackIntoResource() override;
-    void saveFile(const std::string &path = "");
+    void saveFile(const std::string &path) override;
 };
 
 }

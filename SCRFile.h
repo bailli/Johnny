@@ -23,7 +23,7 @@ public:
     explicit SCRFile(const std::string &bmpFilename);
     ~SCRFile();
 
-    void saveFile(const std::string &path = "");
+    void saveFile(const std::string &path) override;
     v8 repackIntoResource() override;
 
     SDL_Texture *getImage(SDL_Renderer *renderer, SDL_Rect &rect);

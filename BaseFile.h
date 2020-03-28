@@ -95,9 +95,10 @@ public:
     virtual ~BaseFile();
 
     std::string filename;
-    static std::string commandToString(Command cmd, bool ads = false);
     virtual void saveFile(const std::string &path) {};
     virtual v8 repackIntoResource() { return v8{}; };
+
+    static std::string commandToString(Command cmd, bool ads = false);
 
     static std::string readString(std::ifstream *in, u8 length = 0, char delimiter = '\0');
     static std::string readString(v8::iterator &it, u8 length = 0, char delimiter = '\0');

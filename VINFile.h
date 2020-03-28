@@ -13,8 +13,9 @@ protected:
 public:
     VINFile(const std::string &name, v8 &data);
     explicit VINFile(const std::string &filename);
+
     v8 repackIntoResource() override;
-    void saveFile(const std::string &path);
+    void saveFile(const std::string &path) override;
 };
 
 }

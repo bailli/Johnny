@@ -3,6 +3,7 @@
 
 #include "BaseFile.h"
 #include <map>
+#include "GraphicBaseFile.h"
 
 namespace SCRANTIC {
 
@@ -26,14 +27,15 @@ private:
 protected:
     v8 header;
     u16 resCount;
+    std::string resFilename;
+    std::map<u8, SCRANTIC::resource> resourceMap;
 
 public:
     RESFile(const std::string &name, bool readFromFile = false);
     ~RESFile();
 
-    std::map<u8, SCRANTIC::resource> resourceMap;
-    std::string resFilename;
     std::vector<std::string> ADSFiles;
+    SDL_Color *setPaletteForAllGraphicResources(const std::string &palFile);
     BaseFile *getResource(const std::string &name);
 
     void repackResources(const std::string &path, const std::string &prepackedPath);

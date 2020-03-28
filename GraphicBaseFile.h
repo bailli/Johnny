@@ -57,10 +57,6 @@ protected:
     SDL_Color defaultPalette[256];
 
 public:
-
-public:
-
-public:
     GraphicBaseFile();
     ~GraphicBaseFile() {};
 };

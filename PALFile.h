@@ -21,11 +21,13 @@ protected:
     std::vector<SDL_Color> palette;
 
 public:
+    v8 repackIntoResource() override;
+    void saveFile(const std::string &path) override;
+
+    SDL_Color *getPalette() { return &palette[0]; }
+
     PALFile(const std::string &name, v8 &data);
     explicit PALFile(const std::string &filename);
-    v8 repackIntoResource() override;
-    void saveFile(const std::string &path);
-    SDL_Color *getPalette() { return &palette[0]; }
 };
 
 }
