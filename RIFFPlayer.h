@@ -20,9 +20,11 @@ protected:
     Mix_Chunk *audioSamples[MAX_AUDIO];
 
 public:
-    explicit RIFFPlayer(const std::string &SCRExe);
+    explicit RIFFPlayer(const std::string &path, bool readFromFiles);
     ~RIFFPlayer();
     void play(u8 num, bool stopAllOther = true);
+
+    static std::vector<v8> extractRIFFFiles(const std::string &filename, const std::string &path, bool writeFiles);
 };
 
 }

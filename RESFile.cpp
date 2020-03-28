@@ -254,6 +254,7 @@ void SCRANTIC::RESFile::repackResources(const std::string &path, const std::stri
 
 void SCRANTIC::RESFile::unpackResources(const std::string& path, bool onlyFiles) {
     fs::create_directories(path);
+    fs::create_directories(path + "RIFF/");
 
     std::cout << "Johnny will unpack his resources :)" << std::endl;
     std::cout << "===================================" << std::endl << std::endl;

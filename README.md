@@ -20,9 +20,7 @@ The program plays a few scenes almost perfect and many scenes okay. Some scenes 
 
 The application is able to unpack all resources to "normal" file types and repack them into a `RESOUCRE.MAP/.001` archive. There are some blobs in `RESOURCE.MAP` which are not understood and just copied over. However, repacked resources seem to work fine with the original executable.
 
-Scrantic BMP and SCR files are unpacked to 32bit RGBA bitmaps, other resources result in plain text files. The text parser for repacking the resources is not very robust, so make sure to only feed it correctly formatted files.
-
-The RIFF sound files are currently still only supported by supplying the `SCRANTIC.SCR` executable. This will probably change soon.
+Scrantic BMP and SCR files are unpacked to 32bit RGBA bitmaps, other resources result in plain text files. The text parser for repacking the resources is not very robust, so make sure to only feed it correctly formatted files. Sound samples will be extract to the subdirectory `RIFF`, but they will not be repacked!
 
 ## Commandline options
 

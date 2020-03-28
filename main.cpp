@@ -7,6 +7,7 @@
 #include "Robinson.h"
 
 #include "CommandlineParser.h"
+#include "RIFFPlayer.h"
 
 #ifdef WIN32
 #include <SDL.h>
@@ -129,6 +130,7 @@ bool handleCommandline(char **begin, char **end) {
         bool onlyFiles = commandlineParser.cmdOptionExists("--onlyFiles");
         SCRANTIC::RESFile res(path + "RESOURCE.MAP", false);
         res.unpackResources(outputPath, onlyFiles);
+        SCRANTIC::RIFFPlayer::extractRIFFFiles(path + "SCRANTIC.SCR", outputPath + "RIFF/", true);
         return true;
     }
 
@@ -157,7 +159,7 @@ int main(int argc, char **argv) {
     }
 
     cout << "Hello Johnny's World!" << endl;
-    SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson(g_path + "RESOURCE.MAP", g_path + "SCRANTIC.SCR", g_readUnpackedRes);
+    SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson(g_path, g_readUnpackedRes);
 
     crusoe->initRenderer(g_Renderer);
     crusoe->initMenu(g_Font);
