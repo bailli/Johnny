@@ -11,7 +11,7 @@
 namespace SCRANTIC {
 
 // TTM instructions
-#define CMD_UNK_0080         0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND / no params => seems right
+#define CMD_CLEAR_IMGSLOT    0x0080 // only after "Select Image Slot" - clear slot?! -- old define CMD_DRAW_BACKGROUND / no params => seems right
 #define CMD_PURGE            0x0110 // still not sure what really gets "purged" / no params
 #define CMD_UPDATE           0x0FF0 // no params
 

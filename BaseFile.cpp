@@ -182,8 +182,8 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads) {
 
     if (!ads) {
         switch (cmd.opcode) {
-        case CMD_UNK_0080:
-            return "Unkown 0x0080" + ret;
+        case CMD_CLEAR_IMGSLOT:
+            return "Clear Image Slot" + ret;
         case CMD_PURGE:
             return "Purge" + ret;
         case CMD_UPDATE:

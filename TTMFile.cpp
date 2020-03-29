@@ -353,7 +353,7 @@ u16 SCRANTIC::TTMFile::countUpdateInScript() {
 
 void SCRANTIC::TTMFile::initMnemonics() {
     //no params
-    mnemonics.insert({CMD_UNK_0080, "UNK0800"});
+    mnemonics.insert({CMD_CLEAR_IMGSLOT, "CLRIMGSLOT"});
     mnemonics.insert({CMD_PURGE, "PURGE"});
     mnemonics.insert({CMD_UPDATE, "UPDATE"});
     //1 param
@@ -424,7 +424,7 @@ u16 SCRANTIC::TTMFile::getOpcodeFromMnemonic(std::string &mnemonic) {
 
 int SCRANTIC::TTMFile::getParamCount(u16 opcode) {
     switch (opcode) {
-    case CMD_UNK_0080:
+    case CMD_CLEAR_IMGSLOT:
     case CMD_PURGE:
     case CMD_UPDATE:
         return 0;
