@@ -77,7 +77,7 @@ protected:
     std::string screen;
 
 public:
-    u16 getDelay();
+    u16 getDelay() { return delay; };
     u16 getRemainigDelay(u32 ticks);
     SDL_Rect getClipRect() { return clipRect; }
     i16 getSample() { i16 tmp = audioSample; audioSample = -1; return tmp; }

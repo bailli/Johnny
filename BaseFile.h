@@ -30,7 +30,7 @@ namespace SCRANTIC {
 
 #define CMD_SET_COLOR        0x2000 // Set Bg/Fg color? (once 0xcf 0xcf - mistake?) / 2 params fore/background colour
 #define CMD_UNK_2010         0x2010 // param always 0x0 0x0 usually before Select Image Slot/Load Bitmap -- old define CMD_SET_FRAME_1 / 2 params
-#define CMD_UNK_2020         0x2020 // called often in "xyz timer" / 2 params wait count & delay
+#define CMD_TIMER            0x2020 // called often in "xyz timer" / 2 params wait count & delay
 #define CMD_DRAW_PIXEL       0xA000 // draw pixel at x,y / 2 params
 
 #define CMD_CLIP_REGION      0x4000 // clip region for sprites ATTENTION x1, y1, x2, y2 - not width/height! / 4 params

@@ -373,7 +373,7 @@ void SCRANTIC::TTMFile::initMnemonics() {
     //2 params
     mnemonics.insert({CMD_SET_COLOR, "SELCOLOR"});
     mnemonics.insert({CMD_UNK_2010, "UNK2010"});
-    mnemonics.insert({CMD_UNK_2020, "TIMER"});
+    mnemonics.insert({CMD_TIMER, "TIMER"});
     mnemonics.insert({CMD_DRAW_PIXEL, "PIXEL"});
     //4 params
     mnemonics.insert({CMD_CLIP_REGION, "SETCLIP"});
@@ -444,7 +444,7 @@ int SCRANTIC::TTMFile::getParamCount(u16 opcode) {
         return 0xF;
     case CMD_SET_COLOR:
     case CMD_UNK_2010:
-    case CMD_UNK_2020:
+    case CMD_TIMER:
     case CMD_DRAW_PIXEL:
         return 2;
     case CMD_CLIP_REGION:

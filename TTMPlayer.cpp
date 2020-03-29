@@ -31,6 +31,7 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
       toBeKilled(false),
       images(BMPs),
       res(resFile),
+      screen(""),
       ttm(NULL),
       savedImage(NULL),
       fg(NULL) {
@@ -56,7 +57,7 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
     saveRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
     if (repeat < 0) {
-        maxTicks = -20*repeat;
+        maxTicks = -DELAY_MS*repeat;
         repeat = 0;
         selfDestructActive = true;
     }
@@ -66,10 +67,6 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
 SCRANTIC::TTMPlayer::~TTMPlayer() {
     SDL_DestroyTexture(savedImage);
     SDL_DestroyTexture(fg);
-}
-
-u16 SCRANTIC::TTMPlayer::getDelay() {
-    return delay;
 }
 
 u16 SCRANTIC::TTMPlayer::getRemainigDelay(u32 ticks) {
@@ -170,6 +167,7 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             break;
 
         case CMD_SEL_SLOT_PAL:
+            // ignored - there is only one palette...
             //palSlot = cmd.data.at(0);
             break;
 
@@ -183,8 +181,7 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             std::cout << "TTM Command: jump to script " << cmd.data.at(0) << std::endl;
             break;
 
-        case CMD_UNK_2020:
-            std::cout << "TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
+        case CMD_TIMER:
             waitCount = cmd.data.at(0);
             waitDelay = cmd.data.at(1);
             break;
@@ -389,11 +386,8 @@ void SCRANTIC::TTMPlayer::renderForeground() {
     if (!alreadySaved) {
         if (saveImage) {
             SDL_SetRenderTarget(renderer, savedImage);
-            //don't know why there is more stuff if this check is compiled...
-            //if (lastResult & ttmSaveNew) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-                SDL_RenderClear(renderer);
-            //}
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+            SDL_RenderClear(renderer);
             SDL_RenderCopy(renderer, fg, &saveRect, &saveRect);
             alreadySaved = true;
         }

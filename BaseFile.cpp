@@ -206,8 +206,8 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads) {
             return "Set Color" + ret;
         case CMD_UNK_2010:
             return "Unkown 0x2010" + ret;
-        case CMD_UNK_2020:
-            return "Unkown 0x2020" + ret;
+        case CMD_TIMER:
+            return "Timer" + ret;
         case CMD_CLIP_REGION:
             return "Clip Region" + ret;
         case CMD_SAVE_IMAGE:
