@@ -46,11 +46,11 @@ void SCRANTIC::RESFile::readFromRes(const std::string &path) {
     }
 
     std::ifstream res;
-    res.open(resFilename, std::ios::binary | std::ios::in);
+    res.open(path + resFilename, std::ios::binary | std::ios::in);
     res.unsetf(std::ios::skipws);
 
     if (!res.is_open()) {
-        std::cerr << "RESFile: Could not open resource file: " << resFilename << std::endl;
+        std::cerr << "RESFile: Could not open resource file: " << path + resFilename << std::endl;
     }
 
     readUintLE(&in, resCount);
