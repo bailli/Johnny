@@ -11,6 +11,8 @@ class ADSFile : public CompressedBaseFile
 {
 private:
     void parseRawScript();
+    void parseRawScriptV2();
+    void findLabels();
     void parseFile(v8 &data);
 
     std::map<u16, std::string> mnemonics;
@@ -34,6 +36,9 @@ protected:
     std::map<u16, std::multimap<std::pair<u16, u16>, size_t> > labels;
     std::map<u16, std::vector<Command> > script;
 
+    std::map<u16, std::map<u16, std::vector<size_t>>> labelsAfter;
+    std::map<u16, std::map<u16, std::vector<size_t>>> labelsTogether;
+
 #ifdef DUMP_ADS
     friend class Robinson;
 #endif
@@ -49,6 +54,12 @@ public:
 
     v8 repackIntoResource() override;
     void saveFile(const std::string &path) override;
+
+    std::vector<Command> getBlockAfterMovie(u16 movie, u16 hash, u16 num = 0);
+    std::vector<Command> getBlockTogetherWithMovie(u16 movie, u16 hash, u16 num = 0);
+    std::vector<Command> getInitialBlock(u16 movie);
+    size_t getLabelCountAfter(u16 movie, u16 hash);
+    size_t getLabelCountTogether(u16 movie, u16 hash);
 };
 
 }
