@@ -10,12 +10,12 @@ SCRANTIC::RIFFPlayer::RIFFPlayer(const std::string &path, bool readFromFiles) {
     std::vector<v8> rawData;
 
     if (readFromFiles) {
-        for (size_t i  = 0; i < MAX_AUDIO; ++i) {
-            std::string fname = path + "RIFF/RIFF" + SCRANTIC::BaseFile::hexToString(i, std::dec, 2) + ".WAV";
-            rawData.push_back(SCRANTIC::BaseFile::readFile(fname));
-        }
+        rawData = readRIFFFiles(path);
     } else {
         rawData = extractRIFFFiles(path + "SCRANTIC.SCR", "", false);
+        if (rawData.empty()) {
+            rawData = readRIFFFiles(path);
+        }
     }
 
     for (size_t i = 0; i < rawData.size(); ++i) {
@@ -39,6 +39,18 @@ void SCRANTIC::RIFFPlayer::play(u8 num, bool stopAllOther) {
 
     Mix_PlayChannel(-1, audioSamples[num], 0);
 }
+
+std::vector<v8> SCRANTIC::RIFFPlayer::readRIFFFiles(const std::string& path) {
+    std::vector<v8> riffs;
+
+    for (size_t i  = 0; i < MAX_AUDIO; ++i) {
+        std::string fname = path + "RIFF/RIFF" + SCRANTIC::BaseFile::hexToString(i, std::dec, 2) + ".WAV";
+        riffs.push_back(SCRANTIC::BaseFile::readFile(fname));
+    }
+
+    return riffs;
+}
+
 
 std::vector<v8> SCRANTIC::RIFFPlayer::extractRIFFFiles(const std::string &filename, const std::string &path, bool writeFiles) {
 

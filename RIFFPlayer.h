@@ -16,6 +16,9 @@ namespace SCRANTIC {
 
 class RIFFPlayer
 {
+private:
+    std::vector<v8> readRIFFFiles(const std::string &path);
+
 protected:
     Mix_Chunk *audioSamples[MAX_AUDIO];
 
