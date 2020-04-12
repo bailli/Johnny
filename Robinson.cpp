@@ -25,7 +25,6 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
       delay(0),
       delayTicks(0),
       renderMenu(false),
-      scriptPos(0),
       rendererTarget(NULL),
       islandNight(false),
       islandLarge(false),
@@ -214,71 +213,6 @@ bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key) {
     return false;
 }
 
-bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
-    ads = static_cast<ADSFile *>(res->getResource(adsName));
-
-    if (!ads) {
-        return false;
-    }
-
-    script = ads->getFullMovie(num);
-    if (script.size()) {
-        scriptPos = 0;
-    } else {
-        return false;
-    }
-
-    name = ads->filename;
-    menu->setMenuPostion(name, ads->getMoviePosFromNumber(num));
-    currentMovie = num;
-
-    labels = ads->getMovieLabels(num);
-
-    resetPlayer();
-
-    return true;
-}
-
-void SCRANTIC::Robinson::startMovie() {
-    movieRunning = true;
-    renderMenu = false;
-    delay = 0;
-}
-
-void SCRANTIC::Robinson::resetPlayer() {
-    //currentMovie = 0;
-
-    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
-        delete (*it);
-    }
-
-    ttmScenes.clear();
-
-    islandNight = std::rand() % 2;
-    u8 random = std::rand() % 3;
-    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
-    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
-    islandLarge = std::rand() % 2;
-
-    movieRunning = false;
-    scrTexture = NULL;
-    islandPos= NO_ISLAND;
-
-    lastTTMs.clear();
-
-    delay = 0;
-    delayTicks = 0;
-
-    for (int i = 0; i < MAX_IMAGES; ++i) {
-        images[i] = NULL;
-    }
-
-    SDL_SetRenderTarget(renderer, saveTexture);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, rendererTarget);
-}
-
 void SCRANTIC::Robinson::renderBackgroundAtPos(u16 num, i32 x, i32 y, bool raft, bool holiday) {
     SDL_Rect src, dest;
     SDL_Texture *bkg;
@@ -433,19 +367,16 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
         if (repeat) {
             --repeat;
         }
-        if (cmd.data.at(2) != 0) {
-            std::cout << name << ": TTM Movie with blob " << (i16)cmd.data.at(2) << std::endl;
+        if (cmd.data.at(3) != 0) {
+            std::cout << name << ": TTM Movie with blob " << (i16)cmd.data.at(3) << std::endl;
         }
     }
 
     //check if a TTM matching this hash already exists - if it does do nothing
-    std::pair<u16, u16> hash = std::make_pair(cmd.data.at(0), cmd.data.at(1));
-    std::list<TTMPlayer *>::iterator it = ttmScenes.begin();
-    while (it != ttmScenes.end()) {
-        if ((*it)->getHash() == hash) {
+    u16 hash = SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1));
+    for (auto scene : ttmScenes) {
+        if (scene->getHash() == hash) {
             return;
-        } else {
-            ++it;
         }
     }
 
@@ -486,36 +417,6 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
     ttmScenes.push_back(ttm);
 }
 
-size_t SCRANTIC::Robinson::setPosToLabel(std::pair<u16, u16> lastPlayed, size_t next) {
-    size_t matches = labels.count(lastPlayed);
-
-    if (!matches) {
-        return 0;
-    }
-
-    if (matches > 1) {
-        std::cout << "==================== multiple ADS Labels " << matches << std::endl;
-    }
-
-    if (next == 0) {
-        auto it = labels.find(lastPlayed);
-        scriptPos = it->second;
-    } else {
-        std::cout << "==================== multiple ADS Labels jumping to " << next << " label" << std::endl;
-        std::pair<std::multimap<std::pair<u16, u16>, size_t>::iterator, std::multimap<std::pair<u16, u16>, size_t>::iterator> ret;
-        ret = labels.equal_range(lastPlayed);
-        for (auto iteq = ret.first; iteq != ret.second; ++iteq) {
-            if (next) {
-                next--;
-            } else {
-                scriptPos = iteq->second;
-            }
-        }
-    }
-
-    return matches;
-}
-
 void SCRANTIC::Robinson::runTTMs() {
     TTMPlayer *ttm;
     u16 newDelay = 100;
@@ -542,7 +443,7 @@ void SCRANTIC::Robinson::runTTMs() {
         }
 
         if (ttm->isFinished()) {
-            lastTTMs.push_back(ttm->getHash());
+            lastHashes.push_back(ttm->getHash());
             delete ttm;
             it = ttmScenes.erase(it);
             continue;
@@ -552,129 +453,216 @@ void SCRANTIC::Robinson::runTTMs() {
     }
 }
 
+bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
+    ads = static_cast<ADSFile *>(res->getResource(adsName));
+
+    if (!ads) {
+        return false;
+    }
+
+    name = ads->filename;
+    menu->setMenuPostion(name, ads->getMoviePosFromNumber(num));
+    currentMovie = num;
+
+    resetPlayer();
+
+    return true;
+}
+
+void SCRANTIC::Robinson::startMovie() {
+    movieRunning = true;
+    renderMenu = false;
+    delay = 0;
+}
+
+void SCRANTIC::Robinson::resetPlayer() {
+    //currentMovie = 0;
+
+    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
+        delete (*it);
+    }
+
+    ttmScenes.clear();
+
+    islandNight = std::rand() % 2;
+    u8 random = std::rand() % 3;
+    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
+    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
+    islandLarge = std::rand() % 2;
+
+    movieRunning = false;
+    movieLastRun = false;
+    scrTexture = NULL;
+    islandPos= NO_ISLAND;
+
+    lastHashes.clear();
+
+    delay = 0;
+    delayTicks = 0;
+
+    for (int i = 0; i < MAX_IMAGES; ++i) {
+        images[i] = NULL;
+    }
+
+    SDL_SetRenderTarget(renderer, saveTexture);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer, rendererTarget);
+}
+
 void SCRANTIC::Robinson::advanceScripts() {
-    if (ttmScenes.size()) {
+    if (!movieRunning) {
+        return;
+    }
+
+    if (!ttmScenes.empty()) {
         runTTMs();
-        if (lastTTMs.size()) {
-            for (auto it = lastTTMs.begin(); it != lastTTMs.end(); ++it) {
-                advanceADSScript((*it));
+        if (lastHashes.size() && !movieLastRun) {
+            for (auto hash : lastHashes) {
+                size_t countAfter = ads->getLabelCountAfter(currentMovie, hash);
+
+                for (size_t i = 0; i < countAfter; ++i) {
+                    runADSBlock(false, currentMovie, hash, i);
+                }
             }
-            lastTTMs.clear();
+            lastHashes.clear();
         }
+    } else if (movieLastRun) {
+        std::cout << name << ": Finished ADS Movie: " << currentMovie << std::endl;
+
+        if (queuedMovie) {
+            loadMovie(name, queuedMovie);
+            queuedMovie = 0;
+            //scriptPos = queuedPos;
+            runADSBlock(false, currentMovie, 0, 0);
+            return;
+        }
+
+        movieRunning = false;
     } else {
-        advanceADSScript();
+        runADSBlock(false, currentMovie, 0, 0);
     }
 }
 
-void SCRANTIC::Robinson::advanceADSScript(std::pair<u16, u16> lastPlayed) {
-    if (!script.size() || !movieRunning) {
-        return;
+void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16 num) {
+    std::vector<Command> block;
+
+    if (hash == 0) {
+        block = ads->getInitialBlock(movie);
+    } else if (togetherWith) {
+        block = ads->getBlockTogetherWithMovie(movie, hash, num);
+    } else {
+        block = ads->getBlockAfterMovie(movie, hash, num);
     }
 
-    if (scriptPos >= script.size()) {
-        movieRunning = false;
-        return;
-    }
-
-    Command cmd;
-    std::vector<Command> pickRandom;
-
+    bool done = false;
+    bool found;
+    u16 lastHash = 0;
+    bool skipToPlayMovie = false;
     bool isRandom = false;
-    size_t randomPick;
-    size_t labelCount = 0;
-    size_t labelDone = 0;
+    size_t randomChoice;
 
-    std::pair<u16, u16> hash;
-    std::list<TTMPlayer *>::iterator it;
+    std::vector<Command> randomBlock;
+    std::vector<Command> ttmsToAdd;
+    std::vector<u16> ttmsToAddHashes;
 
-    //on first run go till PLAY_MOVIE
-    //next runs check if label for last finished TTM exists and go there
-    //otherwise do nothing
-    //also: run ADD_TTM_INIT immediately
+    for (auto cmd : block) {
 
-    if (scriptPos != 0) {
-        labelCount = setPosToLabel(lastPlayed);
-        if (!labelCount) {
-            //std::cout << name << ": no label found for: " << lastPlayed.first << " " << lastPlayed.second << std::endl;
-            if (!ttmScenes.size()) {
-                movieRunning = false;
+        if (skipToPlayMovie) {
+            if (cmd.opcode == CMD_PLAY_MOVIE) {
+                skipToPlayMovie = false;
             }
-            return;
+            continue;
         }
-    }
-
-    for (; scriptPos < script.size(); ++scriptPos) {
-        cmd = script[scriptPos];
-
-        //std::cout << "ADS Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
 
         switch (cmd.opcode) {
+
         case CMD_ADD_INIT_TTM:
             addTTM(cmd);
             break;
 
-        case CMD_SKIP_IF_LAST:
+        case CMD_SKIP_IF_PLAYED:
+            skipToPlayMovie = false;
             for (size_t i = 0; i < cmd.data.size(); i += 2) {
-                if ((cmd.data.at(i) == lastPlayed.first) && (cmd.data.at(i+1) == lastPlayed.second)) {
-                    //correct ?
-                    while (script[scriptPos++].opcode != CMD_PLAY_MOVIE) {
-                        ;
-                    }
+                lastHash = SCRANTIC::ADSFile::makeHash(cmd.data.at(i), cmd.data.at(i+1));
+                if (std::find(lastHashes.begin(), lastHashes.end(), lastHash) != lastHashes.end()) {
+                    skipToPlayMovie = true;
+                    break;
+                }
+                if (std::find(ttmsToAddHashes.begin(), ttmsToAddHashes.end(), lastHash) != ttmsToAddHashes.end()) {
+                    skipToPlayMovie = true;
+                    break;
+                }
+            }
+            break;
+
+        case CMD_ONLY_IF_PLAYED:
+            skipToPlayMovie = true;
+            for (size_t i = 0; i < cmd.data.size(); i += 2) {
+                lastHash = SCRANTIC::ADSFile::makeHash(cmd.data.at(i), cmd.data.at(i+1));
+                if (std::find(ttmsToAddHashes.begin(), ttmsToAddHashes.end(), lastHash) != ttmsToAddHashes.end()) {
+                    skipToPlayMovie = false;
                     break;
                 }
             }
             break;
 
         case CMD_PLAY_MOVIE:
-            labelDone++;
-            if (labelCount <= labelDone) {
-                runTTMs();
-                return;
-            } else {
-                setPosToLabel(lastPlayed, labelDone);
-            }
+            done = true;
             break;
 
         case CMD_ADD_TTM: //TTM Scene ??? Repeat
             if (isRandom) {
-                pickRandom.push_back(cmd);
+                randomBlock.push_back(cmd);
             } else {
-                addTTM(cmd);
+                ttmsToAdd.push_back(cmd);
+                ttmsToAddHashes.push_back(SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1)));
             }
             break;
 
-        case CMD_KILL_TTM:
-            hash = std::make_pair(cmd.data.at(0), cmd.data.at(1));
-            it = ttmScenes.begin();
-            while (it != ttmScenes.end()) {
-                if ((*it)->getHash() == hash) {
-                    (*it)->kill();
-                    std::cout << "ADS Command: Kill movie " << hash.first << " " << hash.second << std::endl;
-                    break;
-                } else {
-                    ++it;
-                }
+        case CMD_ZERO_CHANCE:
+            if (!isRandom) {
+                std::cerr << "ERROR: CMD_ZERO_CHANCE found outside of random block!" << std::endl;
+            }
+            for (u16 j = 0; j < cmd.data.at(0); j++) {
+                randomBlock.push_back(cmd);
             }
             break;
 
         case CMD_RANDOM_START:
             isRandom = true;
-            pickRandom.clear();
+            randomBlock.clear();
             break;
 
         case CMD_RANDOM_END:
             isRandom = false;
-            randomPick = std::rand() % pickRandom.size();
-            std::cout << "Random pick: " << randomPick << std::endl;
-            addTTM(pickRandom[randomPick]);
+            randomChoice = std::rand() % randomBlock.size();
+            if (randomBlock[randomChoice].opcode != CMD_ZERO_CHANCE) {
+                ttmsToAdd.push_back(randomBlock[randomChoice]);
+                ttmsToAddHashes.push_back(SCRANTIC::ADSFile::makeHash(randomBlock[randomChoice].data.at(0), randomBlock[randomChoice].data.at(1)));
+            }
+            break;
+
+        case CMD_KILL_TTM:
+            lastHash = SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1));
+            found = false;
+            for (auto scene : ttmScenes) {
+                if (lastHash == scene->getHash()) {
+                    scene->kill();
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                std::cout << "ADS Command: Kill movie not found ! " << (u16)cmd.data.at(0) << " " << cmd.data.at(1) << std::endl;
+            }
             break;
 
         case CMD_PLAY_ADS_MOVIE:
-            if (currentMovie == cmd.data.at(0)) {
-                break;
-            } else {
+            if (currentMovie != cmd.data.at(0)) {
                 queuedMovie = currentMovie;
-                queuedPos = ++scriptPos;
+                queuedPos = 0xFF;
                 loadMovie(name, cmd.data.at(0));
             }
             break;
@@ -683,23 +671,29 @@ void SCRANTIC::Robinson::advanceADSScript(std::pair<u16, u16> lastPlayed) {
             std::cout << "Play ADS Movie: " << cmd.name << std::endl;
             break;
 
+        case CMD_UNK_FFFF:
+            movieLastRun = true;
+            break;
+
         default:
             std::cout << "ADS Command: " << SCRANTIC::BaseFile::commandToString(cmd, true) << std::endl;
             break;
         }
+
+        if (done) {
+            break;
+        }
     }
 
-    std::cout << name << ": Finished ADS Movie: " << currentMovie << std::endl;
-
-    if (queuedMovie) {
-        loadMovie(name, queuedMovie);
-        queuedMovie = 0;
-        scriptPos = queuedPos;
-        advanceADSScript(lastPlayed);
-        return;
+    for (auto ttm : ttmsToAdd) {
+        addTTM(ttm);
+        lastHash = SCRANTIC::ADSFile::makeHash(ttm.data.at(0), ttm.data.at(1));
+        size_t count = ads->getLabelCountTogether(movie, lastHash);
+        for (size_t j = 0; j < count; ++j) {
+            std::cout << ">>>>>>>>>>>>>>>>>>> Running togehter with labelADS Command" << std::endl;
+            runADSBlock(true, movie, lastHash, j);
+        }
     }
 
-    movieRunning = false;
-
-    return;
+    runTTMs();
 }

@@ -6,15 +6,8 @@ SCRANTIC::ADSFile::ADSFile(const std::string &name, v8 &data)
     initMnemonics();
     parseFile(data);
 
-    parseRawScriptV2();
-
-    findLabels();
-
-    //std::vector<Command> cmds = getBlockAfterMovie(3, 0x012c, 0);
-    //std::vector<Command> cmds = getBlockTogetherWithMovie(3, 0x012e, 0);
-    //std::vector<Command> cmds = getInitialBlock(3);
-
     parseRawScript();
+    findLabels();
 }
 
 SCRANTIC::ADSFile::ADSFile(const std::string &filename)
@@ -122,6 +115,7 @@ SCRANTIC::ADSFile::ADSFile(const std::string &filename)
     in.close();
 
     parseRawScript();
+    findLabels();
 }
 
 void SCRANTIC::ADSFile::parseFile(v8 &data) {
@@ -171,7 +165,7 @@ void SCRANTIC::ADSFile::parseFile(v8 &data) {
     }
 }
 
-void SCRANTIC::ADSFile::parseRawScriptV2() {
+void SCRANTIC::ADSFile::parseRawScript() {
     if (!rawScript.size()) {
         return;
     }
@@ -270,30 +264,17 @@ void SCRANTIC::ADSFile::findLabels() {
             Command c = movieIt->second[pos];
             if (c.opcode == CMD_AFTER_SCENE) {
                 for (size_t i = 0; i < c.data.size(); i += 2) {
-                    currentHash = ((c.data.at(i) & 0xFF) << 8) | (c.data.at(i+1) & 0xFF);
+                    currentHash = makeHash(c.data.at(i), c.data.at(i+1));
                     labelsAfter[currentMovie][currentHash].push_back(pos);
                 }
             } else if (c.opcode == CMD_ONLY_IF_PLAYED) {
                 if (movieIt->second[pos - 1].opcode == CMD_PLAY_MOVIE) {
-                    currentHash = ((c.data.at(0) & 0xFF) << 8) | (c.data.at(1) & 0xFF);
+                    currentHash = makeHash(c.data.at(0), c.data.at(1));
                     labelsTogether[currentMovie][currentHash].push_back(pos);
                 }
             }
         }
     }
-
-    /*for (auto it = labelsAfter.begin(); it != labelsAfter.end(); ++it) {
-        std::cout << "Movie " << it->first << std::endl;
-        for (auto itHash = it->second.begin(); itHash != it->second.end(); ++itHash) {
-            std::cout << "Hash " << itHash->first << " pos ";
-            for (auto itPos = itHash->second.begin(); itPos != itHash->second.end(); ++itPos) {
-                std::cout << *itPos << " ";
-            }
-            std::cout << std::endl;
-        }
-    }
-
-    std::cout << "done." << std::endl;*/
 }
 
 std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getInitialBlock(u16 movie) {
@@ -404,171 +385,6 @@ std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getBlockTogetherWithMovie(u16 
     return block;
 }
 
-
-void SCRANTIC::ADSFile::parseRawScript() {
-    if (!rawScript.size()) {
-        return;
-    }
-
-    script.clear();
-
-    v8::iterator it = rawScript.begin();
-
-    u16 word, word2, movie, leftover;
-    Command command;
-    std::map<u16, std::string>::iterator tagIt;
-    std::multimap<std::pair<u16, u16>, size_t> currentLabels;
-
-    movie = 0;
-    leftover = 0;
-
-    bool first = true;
-
-    while (it != rawScript.end()) {
-        if (!leftover) {
-            readUintLE(it, word);
-        } else {
-            word = leftover;
-            leftover = 0;
-        }
-        command.opcode = word;
-        command.data.clear();
-        command.name.clear();
-
-        switch (command.opcode) {
-        case CMD_UNK_1070:
-        case CMD_ADD_INIT_TTM:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            break;
-        case CMD_TTM_LABEL:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word2);
-            command.data.push_back(word2);
-            readUintLE(it, leftover);
-            currentLabels.insert(std::make_pair(std::make_pair(word, word2), script[movie].size()));
-            while (leftover == CMD_OR) {
-                readUintLE(it, leftover);
-                if (leftover != CMD_TTM_LABEL) {
-                    std::cerr << filename << ": Error processing SKIP command! Next word not skip: "<< leftover << std::endl;
-                    break;
-                }
-                readUintLE(it, word);
-                command.data.push_back(word);
-                readUintLE(it, word2);
-                command.data.push_back(word2);
-                currentLabels.insert(std::make_pair(std::make_pair(word, word2), script[movie].size()));
-                readUintLE(it, leftover);
-            }
-            break;
-        case CMD_SKIP_IF_LAST:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word2);
-            command.data.push_back(word2);
-            readUintLE(it, leftover);
-            while (leftover == CMD_OR_SKIP) {
-                readUintLE(it, leftover);
-                if (leftover != CMD_SKIP_IF_LAST) {
-                    std::cerr << filename << ": Error processing SKIP command! Next word not skip: "<< leftover << std::endl;
-                    break;
-                }
-                readUintLE(it, word);
-                command.data.push_back(word);
-                readUintLE(it, word2);
-                command.data.push_back(word2);
-                readUintLE(it, leftover);
-            }
-            break;
-        case CMD_UNK_1370:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            break;
-        case CMD_PLAY_MOVIE:
-            break;
-        case CMD_UNK_1520:
-            break;
-        /*u_read_le(it, word);
-        command.data.push_back(word);
-        u_read_le(it, word);
-        command.data.push_back(word);
-        u_read_le(it, word);
-        command.data.push_back(word);
-        u_read_le(it, word);
-        command.data.push_back(word);
-        u_read_le(it, word);
-        command.data.push_back(word);
-        break;*/
-        case CMD_ADD_TTM:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            break;
-        case CMD_UNK_4000:
-        case CMD_KILL_TTM:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            readUintLE(it, word);
-            command.data.push_back(word);
-            break;
-        case CMD_RANDOM_START:
-            break;
-        case CMD_UNK_3020:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            break;
-        case CMD_RANDOM_END:
-        case CMD_UNK_F010:
-            break;
-        case CMD_PLAY_ADS_MOVIE:
-            readUintLE(it, word);
-            command.data.push_back(word);
-            break;
-        case CMD_UNK_FFFF:
-            break;
-        default:
-            if (command.opcode >= 0x100) {
-                std::cerr << "Unkown ADS command " << command.opcode << std::endl;
-            }
-
-            tagIt = tagList.find(command.opcode);
-            if (tagIt != tagList.end()) {
-                command.name = tagIt->second;
-            }
-
-            if (first) {
-                first = false;
-            } else {
-                labels.insert(std::make_pair(movie, currentLabels));
-                currentLabels.clear();
-            }
-
-            movie = command.opcode;
-            command.data.push_back(command.opcode);
-            command.opcode = CMD_SET_SCENE;
-
-            break;
-        }
-
-        script[movie].push_back(command);
-    }
-
-    labels.insert(std::make_pair(movie, currentLabels));
-}
-
-
 v8 SCRANTIC::ADSFile::repackIntoResource() {
     std::string strings[5] = { "VER:", "ADS:", "RES:", "SCR:", "TAG:" };
 
@@ -639,23 +455,6 @@ std::string SCRANTIC::ADSFile::getResource(u16 num) {
     } else {
         return it->second;
     }
-}
-
-std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getFullMovie(u16 num) {
-    std::map<u16, std::vector<Command> >::iterator it = script.find(num);
-    if (it == script.end()) {
-        return std::vector<Command>();
-    } else {
-        return it->second;
-    }
-}
-
-std::multimap<std::pair<u16, u16>, size_t> SCRANTIC::ADSFile::getMovieLabels(u16 num) {
-    std::multimap<u16, std::multimap<std::pair<u16, u16>, size_t> >::iterator it = labels.find(num);
-    if (it == labels.end()) {
-        return std::multimap<std::pair<u16, u16>, size_t>();
-    }
-    return it->second;
 }
 
 void SCRANTIC::ADSFile::saveFile(const std::string &path) {
@@ -796,3 +595,8 @@ int SCRANTIC::ADSFile::getParamCount(u16 opcode) {
         return 0;
     }
 }
+
+u16 SCRANTIC::ADSFile::makeHash(u16 ttm, u16 scene) {
+    return ((ttm & 0xFF) << 8) | (scene & 0xFF);
+}
+

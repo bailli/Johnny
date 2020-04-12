@@ -4,6 +4,7 @@
 #include "TTMFile.h"
 #include "BMPFile.h"
 #include "RESFile.h"
+#include "ADSFile.h"
 
 #include "defines.h"
 
@@ -87,7 +88,7 @@ public:
     u8 needsSave();
 
     void kill() { toBeKilled = true; }
-    std::pair<u16, u16> getHash() { return std::make_pair(resNo, originalScene); }
+    u16 getHash() { return SCRANTIC::ADSFile::makeHash(resNo, originalScene); }
 
     //Needs to be freed
     SDL_Texture *savedImage;

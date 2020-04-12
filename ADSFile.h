@@ -11,7 +11,6 @@ class ADSFile : public CompressedBaseFile
 {
 private:
     void parseRawScript();
-    void parseRawScriptV2();
     void findLabels();
     void parseFile(v8 &data);
 
@@ -49,8 +48,6 @@ public:
     ADSFile(const std::string &name, v8 &data);
     explicit ADSFile(const std::string &filename);
     std::string getResource(u16 num);
-    std::vector<Command> getFullMovie(u16 num);
-    std::multimap<std::pair<u16, u16>, size_t> getMovieLabels(u16 num);
 
     v8 repackIntoResource() override;
     void saveFile(const std::string &path) override;
@@ -63,6 +60,8 @@ public:
 
     u16 getMovieNumberFromOrder(size_t pos);
     size_t getMoviePosFromNumber(u16 number);
+
+    static u16 makeHash(u16 ttm, u16 scene);
 };
 
 }

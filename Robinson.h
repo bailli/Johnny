@@ -23,12 +23,8 @@ class Robinson
 private:
     Robinson(Robinson &C);
 
-protected:
     RESFile *res;
     ADSFile *ads;
-    std::vector<Command> script;
-    size_t scriptPos;
-    std::multimap<std::pair<u16, u16>, size_t> labels;
 
     RIFFPlayer *audioPlayer;
     RobinsonMenu *menu;
@@ -45,6 +41,7 @@ protected:
     bool islandNight;
     bool islandLarge;
     bool movieRunning;
+    bool movieLastRun;
     bool renderMenu;
 
     // need to be freed
@@ -62,7 +59,7 @@ protected:
     BMPFile *holidayBMP;
     BMPFile *raftBMP;
 
-    std::list<std::pair<u16, u16> > lastTTMs;
+    std::vector<u16> lastHashes;
 
     // lots of rects...
     SDL_Rect fullRect;
@@ -89,9 +86,9 @@ protected:
     void animateBackground();
     void displaySplash();
 
-    size_t setPosToLabel(std::pair<u16, u16> lastPlayed, size_t next = 0);
     void addTTM(Command cmd);
     void runTTMs();
+    void runADSBlock(bool togetherWith, u16 movie, u16 hash, u16 num = 0);
 
 public:
     Robinson(const std::string &path, bool readUnpacked);
@@ -101,7 +98,6 @@ public:
 
     void initRenderer(SDL_Renderer *rendererSDL, TTF_Font *font);
 
-    void advanceADSScript(std::pair<u16, u16> lastPlayed = std::make_pair((u16)0,(u16)0));
     void advanceScripts();
     void render();
 
