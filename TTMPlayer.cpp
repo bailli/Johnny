@@ -36,6 +36,10 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
       savedImage(NULL),
       fg(NULL) {
 
+    for (int i = 0; i < MAX_IMAGES; ++i) {
+        oldImages[i] = NULL;
+    }
+
     ttm = static_cast<TTMFile *>(res->getResource(ttmName));
 
     if (!ttm) {
@@ -134,8 +138,6 @@ void SCRANTIC::TTMPlayer::advanceScript() {
     Command cmd;
     SceneItem item;
 
-    //u16 flag = 0;
-
     bool stop = false;
     audioSample = -1;
     saveImage = false;
@@ -144,8 +146,6 @@ void SCRANTIC::TTMPlayer::advanceScript() {
 
     for (; scriptPos != script.end(); ++scriptPos) {
         cmd = (*scriptPos);
-
-        //std::cout << "TTM Command: " << SCRANTIC::BaseFile::commandToString(cmd) << std::endl;
 
         switch (cmd.opcode) {
         case CMD_PURGE:
@@ -172,7 +172,9 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             break;
 
         case CMD_CLEAR_IMGSLOT:
-            images[imgSlot] = NULL;
+            if (oldImages[imgSlot] != NULL) {
+                images[imgSlot] = oldImages[imgSlot];
+            }
             break;
 
         case CMD_SET_SCENE:
@@ -295,17 +297,16 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             if ((cmd.data.at(0) < 1) || (cmd.data.at(0) > MAX_AUDIO)) {
                 break;
             }
-            //flag |= ttmPlaySound;
             audioSample = cmd.data.at(0) - 1;
             break;
 
         case CMD_LOAD_SCREEN:
             screen = cmd.name;
-            //flag |= ttmLoadScreen;
             items.clear();
             break;
 
         case CMD_LOAD_BITMAP:
+            oldImages[imgSlot] = images[imgSlot];
             images[imgSlot] = static_cast<BMPFile *>(res->getResource(cmd.name));
             break;
 

@@ -72,6 +72,7 @@ protected:
     SDL_Rect saveRect;
 
     BMPFile **images;
+    BMPFile *oldImages[MAX_IMAGES];
     RESFile *res;
     TTMFile *ttm;
 
