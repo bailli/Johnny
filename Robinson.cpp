@@ -14,17 +14,17 @@
 SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
     : res(NULL),
       audioPlayer(NULL),
-      renderMenu(false),
+      menu(NULL),
       renderer(NULL),
-      movieRunning(false),
-      animationCycle(0),
-      islandPos(NO_ISLAND),
       ads(NULL),
+      animationCycle(0),
       queuedMovie(0),
       currentMovie(0),
+      islandPos(NO_ISLAND),
+      movieRunning(false),
       delay(0),
       delayTicks(0),
-      currentMenuPos(0),
+      renderMenu(false),
       scriptPos(0),
       rendererTarget(NULL),
       islandNight(false),
@@ -52,15 +52,16 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
 #ifdef DUMP_ADS
     std::string adsstring;
     std::string num;
+    std::map<std::string, std::vector<std::string>> items = res->getMovieList();
     ADSFile *dump;
-    for (size_t i = 0; i < res->ADSFiles.size(); ++i) {
-        adsstring = res->ADSFiles.at(i);
+    for (auto it = items.begin(); it != items.end(); ++it) {
+        adsstring = it->first;
         dump = static_cast<ADSFile *>(res->getResource(adsstring));
 
         std::cout << "Filename: " << dump->filename << std::endl;
 
         for (auto it = dump->tagList.begin(); it != dump->tagList.end(); ++it) {
-            num = SCRANTIC::BaseFile::hex_to_string(it->first, std::dec);
+            num = SCRANTIC::BaseFile::hexToString(it->first, std::dec);
             for (size_t j = num.size(); j < 3; ++j) {
                 num = " " + num;
             }
@@ -73,9 +74,9 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
         Command *cmd;
         TTMFile *ttm;
         for (auto it = dump->script.begin(); it != dump->script.end(); ++it) {
-            std::cout << "Movie number: " << it->first << " - 0x" << SCRANTIC::BaseFile::hex_to_string(it->first, std::hex) << std::endl;
+            std::cout << "Movie number: " << it->first << " - 0x" << SCRANTIC::BaseFile::hexToString(it->first, std::hex) << std::endl;
             for (size_t pos = 0; pos < it->second.size(); ++pos) {
-                num = SCRANTIC::BaseFile::hex_to_string(pos, std::dec);
+                num = SCRANTIC::BaseFile::hexToString(pos, std::dec);
                 for (size_t j = num.size(); j < 3; ++j) {
                     num = " " + num;
                 }
@@ -120,6 +121,10 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
 
 SCRANTIC::Robinson::~Robinson()
 {
+    if (menu != NULL) {
+        delete menu;
+    }
+
     delete palette;
 
     SDL_DestroyTexture(bgTexture);
@@ -147,7 +152,7 @@ void SCRANTIC::Robinson::displaySplash() {
     SDL_RenderPresent(renderer);
 }
 
-void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL) {
+void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL, TTF_Font *font) {
     //renderer and target
     renderer = rendererSDL;
     rendererTarget = SDL_GetRenderTarget(renderer);
@@ -189,159 +194,25 @@ void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL) {
     saveTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, fullRect.w, fullRect.h);
     SDL_SetTextureBlendMode(fgTexture, SDL_BLENDMODE_BLEND);
     SDL_SetTextureBlendMode(saveTexture, SDL_BLENDMODE_BLEND);
-}
 
-void SCRANTIC::Robinson::initMenu(TTF_Font *font) {
-    //generate menu textures
-
-    std::string name, adsstring;
-    u16 id;
-
-    SDL_Color c1 = { 255,   0,   0, 255 };
-    SDL_Color c2 = { 255, 255, 255, 255 };
-    SDL_Rect rect = { 20, 0, 0, 0 };
-
-    for (size_t i = 0; i < res->ADSFiles.size(); ++i) {
-        adsstring = res->ADSFiles.at(i);
-        ADSFile *ads = static_cast<ADSFile *>(res->getResource(adsstring));
-
-        SDL_Surface *menu = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32, 0, 0, 0, 0);
-
-        rect.y = 10;
-
-        TTF_SizeText(font, adsstring.c_str(), &rect.w, &rect.h);
-        SDL_Surface *tmpSurface = TTF_RenderText_Blended(font, adsstring.c_str(), c1);
-
-        if (tmpSurface == NULL) {
-            std::cerr << "ERROR: Renderer: Could not render text: " << name << std::endl;
-        } else {
-            SDL_BlitSurface(tmpSurface, NULL, menu, &rect);
-            SDL_FreeSurface(tmpSurface);
-        }
-
-        menuPos.insert(std::make_pair(adsstring, std::map<u16, SDL_Rect>()));
-
-
-        for (auto tag : ads->tagList) {
-            id = tag.first;
-            name = tag.second;
-
-            rect.y = rect.y + rect.h + 10;
-
-            TTF_SizeText(font, name.c_str(), &rect.w, &rect.h);
-            tmpSurface = TTF_RenderText_Blended(font, name.c_str(), c2);
-
-            if (tmpSurface == NULL) {
-                std::cerr << "ERROR: Renderer: Could not render text: " << name << std::endl;
-            } else {
-                SDL_BlitSurface(tmpSurface, NULL, menu, &rect);
-                SDL_FreeSurface(tmpSurface);
-                rect.w += 6;
-                rect.x -= 3;
-                rect.h += 6;
-                rect.y -= 3;
-                menuPos.at(adsstring).insert(std::make_pair(id, rect));
-                rect.x += 3;
-                rect.y += 3;
-                rect.h -= 6;
-            }
-
-        }
-
-        SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, menu);
-
-        if (tex == NULL) {
-            std::cerr << "ERROR: Renderer: Could not convert menu surface to to texture: " << res->ADSFiles.at(i) << std::endl;
-        } else {
-            SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-            SDL_SetTextureAlphaMod(tex, 200);
-        }
-
-        SDL_FreeSurface(menu);
-
-        menuScreen.insert(std::make_pair(adsstring, tex));
-    }
+    menu = new RobinsonMenu(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    menu->initMenu(res->getMovieList(), font);
 }
 
 bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key) {
-    size_t i;
+    std::string newPage;
+    size_t newPos;
 
-    switch (key) {
-    case SDLK_LEFT:
-    case SDLK_RIGHT:
-        for (i = 0; i < res->ADSFiles.size(); ++i) {
-            if (res->ADSFiles.at(i) == currentMenuScreen) {
-                break;
-            }
-        }
-
-        if (i >= res->ADSFiles.size()) {
-            std::cerr << "Menu screen not found! " << currentMenuScreen << std::endl;
-            return false;
-        }
-
-        if (key == SDLK_LEFT) {
-            if (i == 0) {
-                i = res->ADSFiles.size() - 1;
-            } else {
-                --i;
-            }
-        } else {
-            if (i == res->ADSFiles.size()-1) {
-                i = 0;
-            } else {
-                ++i;
-            }
-        }
-
-        currentMenuScreen = res->ADSFiles.at(i);
-        currentMenuPos = menuPos[currentMenuScreen].begin()->first;
-        break;
-
-    case SDLK_RETURN:
-        loadMovie(currentMenuScreen, currentMenuPos);
+    if (menu->navigateMenu(key, newPage, newPos)) {
+        ADSFile *ads = static_cast<ADSFile *>(res->getResource(newPage));
+        loadMovie(newPage, ads->getMovieNumberFromOrder(newPos));
         renderMenu = false;
         movieRunning = true;
         return true;
-
-    case SDLK_UP:
-    case SDLK_DOWN:
-        auto it = menuPos[currentMenuScreen].find(currentMenuPos);
-        if (it == menuPos[currentMenuScreen].end()) {
-            std::cerr << "Menu position not found! " << currentMenuScreen << std::endl;
-            return false;
-        }
-
-        if (key == SDLK_UP) {
-            if (it == menuPos[currentMenuScreen].begin()) {
-                it = menuPos[currentMenuScreen].end();
-            }
-            --it;
-        } else {
-            ++it;
-            if (it == menuPos[currentMenuScreen].end()) {
-                it = menuPos[currentMenuScreen].begin();
-            }
-        }
-        currentMenuPos = it->first;
-        break;
     }
 
     return false;
 }
-
-void SCRANTIC::Robinson::menuRenderer() {
-    auto it = menuScreen.find(currentMenuScreen);
-    if (it == menuScreen.end()) {
-        std::cerr << "Menu screen not found! " << currentMenuScreen << std::endl;
-        return;
-    }
-
-    SDL_SetRenderDrawColor(renderer, 127, 127, 127, 255);
-    SDL_RenderFillRect(renderer, &menuPos[currentMenuScreen][currentMenuPos]);
-    SDL_RenderCopy(renderer, it->second, NULL, NULL);
-}
-
 
 bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
     ads = static_cast<ADSFile *>(res->getResource(adsName));
@@ -358,8 +229,7 @@ bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
     }
 
     name = ads->filename;
-    currentMenuScreen = adsName;
-    currentMenuPos = num;
+    menu->setMenuPostion(name, ads->getMoviePosFromNumber(num));
     currentMovie = num;
 
     labels = ads->getMovieLabels(num);
@@ -502,7 +372,6 @@ void SCRANTIC::Robinson::render() {
     }
     // background end
 
-    SDL_Rect tmp = { 0, 0, 320, 240 };
     // render everything to screen
     SDL_SetRenderTarget(renderer, rendererTarget);
     SDL_RenderClear(renderer);
@@ -548,7 +417,7 @@ void SCRANTIC::Robinson::render() {
     }
 
     if (renderMenu) {
-        menuRenderer();
+        menu->render();
     }
 }
 

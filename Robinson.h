@@ -8,6 +8,7 @@
 #include "PALFile.h"
 #include "TTMPlayer.h"
 #include "RIFFPlayer.h"
+#include "RobinsonMenu.h"
 
 #ifdef WIN32
 #include <SDL_ttf.h>
@@ -23,13 +24,6 @@ private:
     Robinson(Robinson &C);
 
 protected:
-    //menu stuff
-    std::map<std::string, SDL_Texture *> menuScreen;
-    std::map<std::string, std::map<u16, SDL_Rect> > menuPos;
-    std::string currentMenuScreen;
-    size_t currentMenuPos;
-    bool renderMenu;
-
     RESFile *res;
     ADSFile *ads;
     std::vector<Command> script;
@@ -37,6 +31,7 @@ protected:
     std::multimap<std::pair<u16, u16>, size_t> labels;
 
     RIFFPlayer *audioPlayer;
+    RobinsonMenu *menu;
 
     SDL_Renderer *renderer;
     SDL_Texture *rendererTarget;
@@ -50,6 +45,7 @@ protected:
     bool islandNight;
     bool islandLarge;
     bool movieRunning;
+    bool renderMenu;
 
     // need to be freed
     SDL_Texture *bgTexture;
@@ -89,7 +85,6 @@ protected:
 
     void resetPlayer();
 
-    void menuRenderer();
     void renderBackgroundAtPos(u16 num, i32 x, i32 y, bool raft = false, bool holiday = false);
     void animateBackground();
     void displaySplash();
@@ -104,8 +99,7 @@ public:
 
     bool navigateMenu(SDL_Keycode key);
 
-    void initMenu(TTF_Font *font);
-    void initRenderer(SDL_Renderer *rendererSDL);
+    void initRenderer(SDL_Renderer *rendererSDL, TTF_Font *font);
 
     void advanceADSScript(std::pair<u16, u16> lastPlayed = std::make_pair((u16)0,(u16)0));
     void advanceScripts();

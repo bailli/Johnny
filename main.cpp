@@ -161,8 +161,7 @@ int main(int argc, char **argv) {
     cout << "Hello Johnny's World!" << endl;
     SCRANTIC::Robinson *crusoe = new SCRANTIC::Robinson(g_path, g_readUnpackedRes);
 
-    crusoe->initRenderer(g_Renderer);
-    crusoe->initMenu(g_Font);
+    crusoe->initRenderer(g_Renderer, g_Font);
 
     crusoe->loadMovie("VISITOR.ADS", 3);
     crusoe->startMovie();

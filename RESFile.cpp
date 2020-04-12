@@ -99,7 +99,6 @@ void SCRANTIC::RESFile::readFromRes(const std::string &path) {
         } else if (newRes.filetype == "ADS") {
             ADSFile *resfile = new ADSFile(newRes.filename, newRes.data);
             newRes.handle = static_cast<BaseFile *>(resfile);
-            ADSFiles.push_back(newRes.filename);
         }
 
         resourceMap.insert(std::pair<u8, SCRANTIC::resource>(i, newRes));
@@ -177,7 +176,6 @@ void SCRANTIC::RESFile::readFromFiles(const std::string &path) {
         } else if (newRes.filetype == "ADS") {
             ADSFile *resfile = new ADSFile(path + newRes.filename);
             newRes.handle = static_cast<BaseFile *>(resfile);
-            ADSFiles.push_back(newRes.filename);
         }
 
         resourceMap.insert(std::pair<u8, SCRANTIC::resource>(count++, newRes));
@@ -336,3 +334,21 @@ SCRANTIC::BaseFile *SCRANTIC::RESFile::getResource(const std::string &name) {
 
     return NULL;
 }
+
+std::map<std::string, std::vector<std::string> > SCRANTIC::RESFile::getMovieList() {
+    std::map<std::string, std::vector<std::string>> items;
+
+    for (auto it = resourceMap.begin(); it != resourceMap.end(); ++it) {
+        if (it->second.filetype == "ADS") {
+            ADSFile * ads = static_cast<ADSFile *>(it->second.handle);
+            std::string page = ads->filename;
+            for (auto item : ads->tagList) {
+                items[page].push_back(item.second);
+            }
+        }
+    }
+
+    return items;
+}
+
+

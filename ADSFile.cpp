@@ -180,14 +180,13 @@ void SCRANTIC::ADSFile::parseRawScriptV2() {
 
     v8::iterator it = rawScript.begin();
     u16 opcode, word, listOpcode;
-    size_t length;
 
     u16 maxTagId = tagList.rbegin()->first;
     u16 currentMovie;
 
     while (it != rawScript.end()) {
         readUintLE(it, opcode);
-        length = getParamCount(opcode);
+        size_t length = getParamCount(opcode);
 
         Command c;
         c.opcode = opcode;
@@ -232,6 +231,34 @@ void SCRANTIC::ADSFile::parseRawScriptV2() {
         script[currentMovie].push_back(c);
     }
 }
+
+u16 SCRANTIC::ADSFile::getMovieNumberFromOrder(size_t pos) {
+    size_t count = 0;
+
+    for (auto it = tagList.begin(); it != tagList.end(); ++it) {
+        if (pos == count) {
+            return it->first;
+        }
+        ++count;
+    }
+
+    return 0;
+}
+
+size_t SCRANTIC::ADSFile::getMoviePosFromNumber(u16 number) {
+    size_t count = 0;
+
+    for (auto it = tagList.begin(); it != tagList.end(); ++it) {
+        if (number == it->first) {
+            return count;
+        }
+        ++count;
+    }
+
+    return 0;
+}
+
+
 
 void SCRANTIC::ADSFile::findLabels() {
     u16 currentMovie;

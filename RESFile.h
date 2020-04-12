@@ -34,9 +34,9 @@ public:
     RESFile(const std::string &name, bool readFromFile = false);
     ~RESFile();
 
-    std::vector<std::string> ADSFiles;
     SDL_Color *setPaletteForAllGraphicResources(const std::string &palFile);
     BaseFile *getResource(const std::string &name);
+    std::map<std::string, std::vector<std::string>> getMovieList();
 
     void repackResources(const std::string &path, const std::string &prepackedPath);
     void unpackResources(const std::string &path, bool onlyFiles = false);

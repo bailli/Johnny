@@ -60,6 +60,9 @@ public:
     std::vector<Command> getInitialBlock(u16 movie);
     size_t getLabelCountAfter(u16 movie, u16 hash);
     size_t getLabelCountTogether(u16 movie, u16 hash);
+
+    u16 getMovieNumberFromOrder(size_t pos);
+    size_t getMoviePosFromNumber(u16 number);
 };
 
 }
