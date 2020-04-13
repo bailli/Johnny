@@ -690,7 +690,7 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
             std::cout << "Play ADS Movie: " << cmd.name << std::endl;
             break;
 
-        case CMD_UNK_FFFF:
+        case CMD_END_SCRIPT:
             movieLastRun = true;
             break;
 
@@ -703,7 +703,6 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
             break;
         }
     }
-
 
     for (auto ttm : ttmsToAdd) {
         addTTM(ttm);

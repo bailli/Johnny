@@ -254,16 +254,16 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads) {
             return "Unkown 0x1070" + ret;
         case CMD_ADD_INIT_TTM:
             return "Add Init TTM" + ret;
-        case CMD_TTM_LABEL:
+        case CMD_AFTER_SCENE:
             return "Label" + ret;
-        case CMD_SKIP_IF_LAST:
-            return "Skip Next If Last" + ret;
-        case CMD_UNK_1370:
-            return "Unkown 0x1370" + ret;
+        case CMD_SKIP_IF_PLAYED:
+            return "Skip Next If Played" + ret;
+        case CMD_ONLY_IF_PLAYED:
+            return "Play only with" + ret;
         case CMD_OR_SKIP:
             return "Or (Skip)" + ret;
-        case CMD_OR:
-            return "Or (Cond)" + ret;
+        case CMD_OR_AFTER:
+            return "Or (After)" + ret;
         case CMD_PLAY_MOVIE:
             return "Play Movie" + ret;
         case CMD_UNK_1520:
@@ -274,18 +274,18 @@ std::string SCRANTIC::BaseFile::commandToString(Command cmd, bool ads) {
             return "Kill TTM" + ret;
         case CMD_RANDOM_START:
             return "Random Start" + ret;
-        case CMD_UNK_3020:
-            return "Unkown 0x3020" + ret;
+        case CMD_ZERO_CHANCE:
+            return "Zero chance" + ret;
         case CMD_RANDOM_END:
             return "Random End" + ret;
-        case CMD_UNK_4000:
+        case CMD_UNK_LABEL:
             return "Unkown 0x4000" + ret;
         case CMD_UNK_F010:
             return "Unkown 0xF010" + ret;
         case CMD_PLAY_ADS_MOVIE:
             return "Play ADS Movie" + ret;
-        case CMD_UNK_FFFF:
-            return "Unkown 0xFFFF" + ret;
+        case CMD_END_SCRIPT:
+            return "End script" + ret;
 
         default:
             return "DEFAULT 0x" + hexToString(cmd.opcode, std::hex) + ret;

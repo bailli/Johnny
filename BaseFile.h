@@ -54,15 +54,11 @@ namespace SCRANTIC {
                                     // 36: Unkown 0x1070 0004 0005
                                     // 37: Unkown 0x1520
 #define CMD_ADD_INIT_TTM     0x1330 // Init for TTM Res $1 Scene $2 - why is scene needed?
-#define CMD_AFTER_SCENE      0x1350
-#define CMD_TTM_LABEL        0x1350 // more like "do while ttm/scene last played"
+#define CMD_AFTER_SCENE      0x1350 // more like "do while ttm/scene last played"
                                     // play the following only, but always, after res/scene
-#define CMD_SKIP_IF_PLAYED   0x1360
-#define CMD_SKIP_IF_LAST     0x1360 // this seems like an actual skip if res/scene was lastplayed
-#define CMD_ONLY_IF_PLAYED   0x1370
-#define CMD_UNK_1370         0x1370 // 2 Params: TTM and Scene ? ==> Next command only with or after TTM/scene
+#define CMD_SKIP_IF_PLAYED   0x1360 // this seems like an actual skip if res/scene was lastplayed
+#define CMD_ONLY_IF_PLAYED   0x1370 // 2 Params: TTM and Scene ? ==> Next command only with or after TTM/scene
 #define CMD_OR_SKIP          0x1420 // always after/between SKIPNEXT2  OR condition FOR CMD_SKIP_NEXT_IF_2 ?
-#define CMD_OR               0x1430 // already attached to CMD_COND_MOVIE
 #define CMD_OR_AFTER         0x1430 // already attached to CMD_COND_MOVIE
 #define CMD_PLAY_MOVIE       0x1510 // play one movie from rand list OR play movie list
 #define CMD_UNK_1520         0x1520 // only called once
@@ -71,14 +67,12 @@ namespace SCRANTIC {
 #define CMD_KILL_TTM         0x2010 // kill TTM
 #define CMD_RANDOM_START     0x3010 // add following movies to random list
 #define CMD_ZERO_CHANCE      0x3020
-#define CMD_UNK_3020         0x3020 // params 5 (with "Set Frame")/2 (once with 1 TTM)/1 (4x with 3 TTM) -- old define CMD_RANDOM_UNKNOWN_1  ==> random chance that no ttm will be selected?
 #define CMD_RANDOM_END       0x30FF // rand list end
-#define CMD_UNK_LABEL        0x4000
-#define CMD_UNK_4000         0x4000 // called 4 times - 2x at "end"
+#define CMD_UNK_LABEL        0x4000 // another kind of label/jump mark?
 #define CMD_UNK_F010         0xF010 // called 67 times ==> 0xF010 0xFFFF end current script
 #define CMD_PLAY_ADS_MOVIE   0xF200 //  0: Select Scene 0001 MUN. AMB. POS.A  SW
                                     //  1: Unkown 0xF200 000e <-- play movie no. 0x000e ?
-#define CMD_UNK_FFFF         0xFFFF // Part of Command "0xF010?
+#define CMD_END_SCRIPT         0xFFFF // end movie?
 
 
 struct BaseFileException : public std::exception {

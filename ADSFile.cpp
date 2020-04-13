@@ -510,23 +510,23 @@ void SCRANTIC::ADSFile::initMnemonics() {
     mnemonics.insert({CMD_SET_SCENE, "SCENE"});
     //no params
     mnemonics.insert({CMD_OR_SKIP, "OR"});
-    mnemonics.insert({CMD_OR, "AND"});
+    mnemonics.insert({CMD_OR_AFTER, "AND"});
     mnemonics.insert({CMD_PLAY_MOVIE, "PLAYMOVIE"});
     mnemonics.insert({CMD_UNK_1520, "UNK1520"});
     mnemonics.insert({CMD_RANDOM_START, "RANDSTART"});
     mnemonics.insert({CMD_RANDOM_END, "RANDEND"});
-    mnemonics.insert({CMD_UNK_4000, "UNK4000"});
+    mnemonics.insert({CMD_UNK_LABEL, "UNKLABEL"});
     mnemonics.insert({CMD_UNK_F010, "UNKF010"});
-    mnemonics.insert({CMD_UNK_FFFF, "UNKFFFF"});
+    mnemonics.insert({CMD_END_SCRIPT, "ENDSCRIPT"});
     //1 param
     mnemonics.insert({CMD_PLAY_ADS_MOVIE, "PLAYADS"});
-    mnemonics.insert({CMD_UNK_3020, "UNK3020"});
+    mnemonics.insert({CMD_ZERO_CHANCE, "ZEROCHANCE"});
     //2 params
     mnemonics.insert({CMD_UNK_1070, "UNK1070"});
     mnemonics.insert({CMD_ADD_INIT_TTM, "INITTTM"});
-    mnemonics.insert({CMD_TTM_LABEL, "CONTINUEAFTER"});
-    mnemonics.insert({CMD_SKIP_IF_LAST, "SKIPAFTER"});
-    mnemonics.insert({CMD_UNK_1370, "UNK1370"});
+    mnemonics.insert({CMD_AFTER_SCENE, "CONTINUEAFTER"});
+    mnemonics.insert({CMD_SKIP_IF_PLAYED, "SKIPAFTER"});
+    mnemonics.insert({CMD_ONLY_IF_PLAYED, "TOGETHERWITH"});
     //3 params
     mnemonics.insert({CMD_KILL_TTM, "KILLTTM"});
     //4 params
@@ -564,26 +564,26 @@ u16 SCRANTIC::ADSFile::getOpcodeFromMnemonic(std::string &mnemonic) {
 int SCRANTIC::ADSFile::getParamCount(u16 opcode) {
     switch (opcode) {
     case CMD_OR_SKIP:
-    case CMD_OR:
+    case CMD_OR_AFTER:
     case CMD_PLAY_MOVIE:
     case CMD_UNK_1520:
     case CMD_RANDOM_START:
     case CMD_RANDOM_END:
     case CMD_UNK_F010:
-    case CMD_UNK_FFFF:
+    case CMD_END_SCRIPT:
         return 0;
     case CMD_SET_SCENE: // beware fake
     case CMD_PLAY_ADS_MOVIE:
-    case CMD_UNK_3020:
+    case CMD_ZERO_CHANCE:
         return 1;
     case CMD_UNK_1070:
     case CMD_ADD_INIT_TTM:
-    case CMD_TTM_LABEL:
-    case CMD_SKIP_IF_LAST:
-    case CMD_UNK_1370:
+    case CMD_AFTER_SCENE:
+    case CMD_SKIP_IF_PLAYED:
+    case CMD_ONLY_IF_PLAYED:
         return 2;
     case CMD_KILL_TTM:
-    case CMD_UNK_4000:
+    case CMD_UNK_LABEL:
         return 3;
     case CMD_ADD_TTM:
         return 4;
