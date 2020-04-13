@@ -37,7 +37,7 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
       fg(NULL) {
 
     for (int i = 0; i < MAX_IMAGES; ++i) {
-        oldImages[i] = NULL;
+        oldImages[i] = images[i];
     }
 
     ttm = static_cast<TTMFile *>(res->getResource(ttmName));
@@ -172,9 +172,7 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             break;
 
         case CMD_CLEAR_IMGSLOT:
-            if (oldImages[imgSlot] != NULL) {
-                images[imgSlot] = oldImages[imgSlot];
-            }
+            images[imgSlot] = oldImages[imgSlot];
             break;
 
         case CMD_SET_SCENE:
@@ -306,7 +304,6 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             break;
 
         case CMD_LOAD_BITMAP:
-            oldImages[imgSlot] = images[imgSlot];
             images[imgSlot] = static_cast<BMPFile *>(res->getResource(cmd.name));
             break;
 
