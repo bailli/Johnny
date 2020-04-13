@@ -79,7 +79,6 @@ u16 SCRANTIC::TTMPlayer::getRemainigDelay(u32 ticks) {
 
         if (maxTicks < 1) {
             selfDestruct = true;
-            std::cout << "Scene self-destructing! " << sceneNo << std::endl;
         }
     }
 
@@ -128,6 +127,8 @@ void SCRANTIC::TTMPlayer::advanceScript() {
     if (scriptPos == script.end()) {
         if (repeat) {
             --repeat;
+            scriptPos = script.begin();
+        } else if (selfDestructActive && !selfDestruct) {
             scriptPos = script.begin();
         } else {
             isDone = true;
@@ -182,7 +183,6 @@ void SCRANTIC::TTMPlayer::advanceScript() {
 
         case CMD_JMP_SCENE:
             jumpToScript = cmd.data.at(0);
-            std::cout << "TTM Command: jump to script " << cmd.data.at(0) << std::endl;
             break;
 
         case CMD_TIMER:
