@@ -18,7 +18,6 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
       renderer(NULL),
       ads(NULL),
       animationCycle(0),
-      queuedMovie(0),
       currentMovie(0),
       islandPos(NO_ISLAND),
       movieRunning(false),
@@ -36,8 +35,7 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
       scrTexture(NULL),
       backgroundBMP(NULL),
       holidayBMP(NULL),
-      raftBMP(NULL),
-      queuedPos(0) {
+      raftBMP(NULL) {
 
     std::cout << "--------------- Hello from Robinson Crusoe!---------------" << std::endl;
 
@@ -355,22 +353,37 @@ void SCRANTIC::Robinson::render() {
     }
 }
 
-void SCRANTIC::Robinson::addTTM(Command cmd) {
-    u16 sceneNum;
-    i16 repeat;
-    if (cmd.opcode == CMD_ADD_INIT_TTM) {
-        repeat = 0;
-        sceneNum = 0;
-    } else {
-        sceneNum = cmd.data.at(1);
-        repeat = cmd.data.at(2);
-        if (repeat) {
-            --repeat;
-        }
-        if (cmd.data.at(3) != 0) {
-            std::cout << name << ": TTM Movie with blob " << (i16)cmd.data.at(3) << std::endl;
-        }
+void SCRANTIC::Robinson::resetPlayer() {
+    for (auto scene : ttmScenes) {
+        delete scene;
     }
+
+    ttmScenes.clear();
+
+    islandNight = std::rand() % 2;
+    u8 random = std::rand() % 3;
+    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
+    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
+    islandLarge = std::rand() % 2;
+
+    scrTexture = NULL;
+    islandPos= NO_ISLAND;
+
+
+    delay = 0;
+    delayTicks = 0;
+
+    for (int i = 0; i < MAX_IMAGES; ++i) {
+        images[i] = NULL;
+    }
+
+    SDL_SetRenderTarget(renderer, saveTexture);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer, rendererTarget);
+}
+
+void SCRANTIC::Robinson::addTTM(Command cmd) {
 
     //check if a TTM matching this hash already exists - if it does do nothing
     u16 hash = SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1));
@@ -380,41 +393,57 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
         }
     }
 
+    u16 sceneNum = 0;
+    i16 repeat = 0;
+
+    if (cmd.opcode != CMD_ADD_INIT_TTM) {
+        sceneNum = cmd.data.at(1);
+        repeat = cmd.data.at(2);
+
+        if (repeat) {
+            --repeat;
+        }
+
+        if (cmd.data.at(3) != 1) {
+            std::cout << adsFileName << ": TTM Movie with blob " << (i16)cmd.data.at(3) << " for " << ads->getResource(cmd.data.at(0)) << std::endl;
+        }
+    }
+
     TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
 
-    // this assumes the only relavant action in the init scripts
-    // is to load a SCR! all other actions are lost
-    if (cmd.opcode == CMD_ADD_INIT_TTM) {
-        std::string scrName;
-
-        do {
-            ttm->advanceScript();
-            scrName = ttm->getSCRName();
-            if (scrName != "") {
-                scrTexture = static_cast<SCRFile *>(res->getResource(scrName))->getImage(renderer, screenRect);
-                if (scrName == "ISLETEMP.SCR") {
-                    islandPos = ISLAND_RIGHT;
-                    islandTrunk.x = ISLAND_TEMP_X;
-                    islandTrunk.y = ISLAND_TEMP_Y;
-                } else if (scrName == "ISLAND2.SCR") {
-                    islandPos = ISLAND_LEFT;
-                    islandTrunk.x = ISLAND2_X;
-                    islandTrunk.y = ISLAND2_Y;
-                } else {
-                    islandPos = NO_ISLAND;
-                }
-
-                screenRect.x = 0;
-                screenRect.y = 0;
-            }
-        }
-        while (!ttm->isFinished());
-
-        delete ttm;
+    if (cmd.opcode != CMD_ADD_INIT_TTM) {
+        ttmScenes.push_back(ttm);
         return;
     }
 
-    ttmScenes.push_back(ttm);
+    // this assumes the only relavant action in the init scripts
+    // is to load a SCR! all other actions are lost
+    std::string scrName;
+
+    do {
+        ttm->advanceScript();
+        scrName = ttm->getSCRName();
+        if (scrName != "") {
+            scrTexture = static_cast<SCRFile *>(res->getResource(scrName))->getImage(renderer, screenRect);
+            if (scrName == "ISLETEMP.SCR") {
+                islandPos = ISLAND_RIGHT;
+                islandTrunk.x = ISLAND_TEMP_X;
+                islandTrunk.y = ISLAND_TEMP_Y;
+            } else if (scrName == "ISLAND2.SCR") {
+                islandPos = ISLAND_LEFT;
+                islandTrunk.x = ISLAND2_X;
+                islandTrunk.y = ISLAND2_Y;
+            } else {
+                islandPos = NO_ISLAND;
+            }
+
+            screenRect.x = 0;
+            screenRect.y = 0;
+        }
+    }
+    while (!ttm->isFinished());
+
+    delete ttm;
 }
 
 void SCRANTIC::Robinson::runTTMs() {
@@ -460,9 +489,16 @@ bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
         return false;
     }
 
-    name = ads->filename;
-    menu->setMenuPostion(name, ads->getMoviePosFromNumber(num));
+    adsFileName = ads->filename;
+    menu->setMenuPostion(adsFileName, ads->getMoviePosFromNumber(num));
     currentMovie = num;
+
+    std::cout << "Playing ADS movie " << ads->tagList[num] << std::endl;
+
+    movieRunning = false;
+    movieFirstRun = true;
+    movieLastRun = false;
+    lastHashes.clear();
 
     resetPlayer();
 
@@ -472,42 +508,6 @@ bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
 void SCRANTIC::Robinson::startMovie() {
     movieRunning = true;
     renderMenu = false;
-    delay = 0;
-}
-
-void SCRANTIC::Robinson::resetPlayer() {
-    //currentMovie = 0;
-
-    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
-        delete (*it);
-    }
-
-    ttmScenes.clear();
-
-    islandNight = std::rand() % 2;
-    u8 random = std::rand() % 3;
-    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
-    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
-    islandLarge = std::rand() % 2;
-
-    movieRunning = false;
-    movieLastRun = false;
-    scrTexture = NULL;
-    islandPos= NO_ISLAND;
-
-    lastHashes.clear();
-
-    delay = 0;
-    delayTicks = 0;
-
-    for (int i = 0; i < MAX_IMAGES; ++i) {
-        images[i] = NULL;
-    }
-
-    SDL_SetRenderTarget(renderer, saveTexture);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, rendererTarget);
 }
 
 void SCRANTIC::Robinson::advanceScripts() {
@@ -515,36 +515,47 @@ void SCRANTIC::Robinson::advanceScripts() {
         return;
     }
 
+    if (movieFirstRun) {
+        movieFirstRun = false;
+        runADSBlock(false, currentMovie, 0, 0);
+        return;
+    }
+
     if (!ttmScenes.empty()) {
         runTTMs();
         if (lastHashes.size() && !movieLastRun) {
-            for (auto hash : lastHashes) {
+            auto it = lastHashes.begin();
+            while (it != lastHashes.end()) {
+                u16 hash = *it;
                 size_t countAfter = ads->getLabelCountAfter(currentMovie, hash);
 
                 for (size_t i = 0; i < countAfter; ++i) {
                     runADSBlock(false, currentMovie, hash, i);
                 }
+                ++it;
             }
             lastHashes.clear();
         }
-    } else if (movieLastRun) {
-        std::cout << name << ": Finished ADS Movie: " << currentMovie << std::endl;
-
-        if (queuedMovie) {
-            loadMovie(name, queuedMovie);
-            queuedMovie = 0;
-            //scriptPos = queuedPos;
-            runADSBlock(false, currentMovie, 0, 0);
-            return;
-        }
-
-        movieRunning = false;
-    } else {
-        runADSBlock(false, currentMovie, 0, 0);
+        return;
     }
+
+    std::cout << adsFileName << ": Finished ADS Movie: " << currentMovie << std::endl;
+
+    if (movieQueue.empty()) {
+        movieRunning = false;
+        return;
+    }
+
+    std::pair<u16, bool> nextItem = *movieQueue.begin();
+    bool skipToPlayAds = nextItem.second;
+    currentMovie = nextItem.first;
+
+    movieQueue.erase(movieQueue.begin());
+
+    runADSBlock(false, currentMovie, 0, 0, skipToPlayAds);
 }
 
-void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16 num) {
+void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16 num, bool skipToPlayAds) {
     std::vector<Command> block;
 
     if (hash == 0) {
@@ -567,6 +578,13 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
     std::vector<u16> ttmsToAddHashes;
 
     for (auto cmd : block) {
+
+        if (skipToPlayAds) {
+            if (cmd.opcode == CMD_PLAY_ADS_MOVIE) {
+                skipToPlayAds = false;
+            }
+            continue;
+        }
 
         if (skipToPlayMovie) {
             if (cmd.opcode == CMD_PLAY_MOVIE) {
@@ -661,9 +679,10 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
         case CMD_PLAY_ADS_MOVIE:
             if (currentMovie != cmd.data.at(0)) {
-                queuedMovie = currentMovie;
-                queuedPos = 0xFF;
-                loadMovie(name, cmd.data.at(0));
+                movieQueue.push_front(std::make_pair(currentMovie, true));
+                movieQueue.push_front(std::make_pair(cmd.data.at(0), false));
+                movieLastRun = true;
+                return;
             }
             break;
 
@@ -685,12 +704,12 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
         }
     }
 
+
     for (auto ttm : ttmsToAdd) {
         addTTM(ttm);
         lastHash = SCRANTIC::ADSFile::makeHash(ttm.data.at(0), ttm.data.at(1));
         size_t count = ads->getLabelCountTogether(movie, lastHash);
         for (size_t j = 0; j < count; ++j) {
-            std::cout << ">>>>>>>>>>>>>>>>>>> Running togehter with labelADS Command" << std::endl;
             runADSBlock(true, movie, lastHash, j);
         }
     }

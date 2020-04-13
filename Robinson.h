@@ -41,6 +41,7 @@ private:
     bool islandNight;
     bool islandLarge;
     bool movieRunning;
+    bool movieFirstRun;
     bool movieLastRun;
     bool renderMenu;
 
@@ -59,24 +60,22 @@ private:
     BMPFile *holidayBMP;
     BMPFile *raftBMP;
 
-    std::vector<u16> lastHashes;
-
     // lots of rects...
     SDL_Rect fullRect;
     SDL_Rect oceanRect;
     SDL_Rect screenRect;
 
     //u16 currentMovie;
-    std::string name;
+    std::string adsFileName;
 
     std::list<TTMPlayer *> ttmScenes;
+    std::list<std::pair<u16, bool>> movieQueue;
+    std::list<u16> lastHashes;
 
     BMPFile *images[MAX_IMAGES];
 
     u16 delay;
     u16 currentMovie;
-    u16 queuedMovie;
-    size_t queuedPos;
 
     u32 delayTicks;
 
@@ -88,7 +87,7 @@ private:
 
     void addTTM(Command cmd);
     void runTTMs();
-    void runADSBlock(bool togetherWith, u16 movie, u16 hash, u16 num = 0);
+    void runADSBlock(bool togetherWith, u16 movie, u16 hash, u16 num = 0, bool skipToPlayAds = false);
 
 public:
     Robinson(const std::string &path, bool readUnpacked);
