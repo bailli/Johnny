@@ -95,7 +95,6 @@ void SCRANTIC::RobinsonMenu::render() {
 }
 
 bool SCRANTIC::RobinsonMenu::navigateMenu(SDL_Keycode key, std::string &newPage, size_t &newPosition) {
-    size_t i;
     std::map<std::string, SDL_Texture*>::iterator it;
 
     switch (key) {

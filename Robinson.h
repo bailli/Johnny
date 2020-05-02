@@ -9,6 +9,7 @@
 #include "TTMPlayer.h"
 #include "RIFFPlayer.h"
 #include "RobinsonMenu.h"
+#include "RobinsonCompositor.h"
 
 #ifdef WIN32
 #include <SDL_ttf.h>
@@ -28,42 +29,16 @@ private:
 
     RIFFPlayer *audioPlayer;
     RobinsonMenu *menu;
+    RobinsonCompositor *compositor;
 
     SDL_Renderer *renderer;
-    SDL_Texture *rendererTarget;
 
     SDL_Color *palette;
 
-    i8 animationCycle;
-    i8 islandPos;
-    SDL_Point islandTrunk;
-
-    bool islandNight;
-    bool islandLarge;
     bool movieRunning;
     bool movieFirstRun;
     bool movieLastRun;
     bool renderMenu;
-
-    // need to be freed
-    SDL_Texture *bgTexture;
-    SDL_Texture *fgTexture;
-    SDL_Texture *saveTexture;
-
-    //freed by SCRFile
-    SDL_Texture *oceanTexture;
-    SDL_Texture *oceanNightTexture;
-    SDL_Texture *scrTexture;
-
-    //freed by BMPFile
-    BMPFile *backgroundBMP;
-    BMPFile *holidayBMP;
-    BMPFile *raftBMP;
-
-    // lots of rects...
-    SDL_Rect fullRect;
-    SDL_Rect oceanRect;
-    SDL_Rect screenRect;
 
     //u16 currentMovie;
     std::string adsFileName;
@@ -80,10 +55,6 @@ private:
     u32 delayTicks;
 
     void resetPlayer();
-
-    void renderBackgroundAtPos(u16 num, i32 x, i32 y, bool raft = false, bool holiday = false);
-    void animateBackground();
-    void displaySplash();
 
     void addTTM(Command cmd);
     void runTTMs();
@@ -108,6 +79,7 @@ public:
 
     u32 getCurrentDelay() { return delay; }
     void displayMenu(bool show) { renderMenu = show; }
+    void displaySplash();
 };
 
 }

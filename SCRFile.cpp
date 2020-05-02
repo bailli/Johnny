@@ -107,8 +107,7 @@ SDL_Texture *SCRANTIC::SCRFile::getImage(SDL_Renderer *renderer, SDL_Rect &rect)
         }
     }
 
-    rect.w = image->w;
-    rect.h = image->h;
+    rect = { 0, 0, image->w, image->h };
 
     return texture;
 }

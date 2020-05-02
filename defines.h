@@ -90,6 +90,10 @@
 
 #define RENDERFLAG_MIRROR 0x1
 
+#define SAVE_NOSAVE 0
+#define SAVE_IMAGE 1
+#define SAVE_NEWIMAGE 2
+
 #define MAX_IMAGES 10
 #define MAX_AUDIO 24
 

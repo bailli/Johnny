@@ -215,7 +215,6 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             saveRect.h = cmd.data.at(3);
             items.splice(items.end(), queuedItems);
             renderForeground();
-            //stop = true;
             break;
 
         case CMD_DRAW_PIXEL:
@@ -400,10 +399,10 @@ void SCRANTIC::TTMPlayer::renderForeground() {
 
 u8 SCRANTIC::TTMPlayer::needsSave() {
     if (!saveImage) {
-        return 0;
+        return SAVE_NOSAVE;
     } else if (saveNewImage) {
-        return 2;
+        return SAVE_NEWIMAGE;
     } else {
-        return 1;
+        return SAVE_IMAGE;
     }
 }

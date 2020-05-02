@@ -15,27 +15,16 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
     : res(NULL),
       audioPlayer(NULL),
       menu(NULL),
+      compositor(NULL),
       renderer(NULL),
       ads(NULL),
-      animationCycle(0),
       currentMovie(0),
-      islandPos(NO_ISLAND),
       movieRunning(false),
+      movieFirstRun(true),
+      movieLastRun(false),
       delay(0),
       delayTicks(0),
-      renderMenu(false),
-      rendererTarget(NULL),
-      islandNight(false),
-      islandLarge(false),
-      bgTexture(NULL),
-      fgTexture(NULL),
-      saveTexture(NULL),
-      oceanTexture(NULL),
-      oceanNightTexture(NULL),
-      scrTexture(NULL),
-      backgroundBMP(NULL),
-      holidayBMP(NULL),
-      raftBMP(NULL) {
+      renderMenu(false) {
 
     std::cout << "--------------- Hello from Robinson Crusoe!---------------" << std::endl;
 
@@ -122,11 +111,11 @@ SCRANTIC::Robinson::~Robinson()
         delete menu;
     }
 
-    delete palette;
+    if (compositor != NULL) {
+        delete compositor;
+    }
 
-    SDL_DestroyTexture(bgTexture);
-    SDL_DestroyTexture(fgTexture);
-    SDL_DestroyTexture(saveTexture);
+    delete palette;
 
     if (audioPlayer != NULL) {
         delete audioPlayer;
@@ -140,57 +129,13 @@ SCRANTIC::Robinson::~Robinson()
 }
 
 void SCRANTIC::Robinson::displaySplash() {
-    //display splash
-    SDL_Rect splashRect;
-    splashRect.x = 0;
-    splashRect.y = 0;
-    SDL_Texture *splash = static_cast<SCRFile *>(res->getResource("INTRO.SCR"))->getImage(renderer, splashRect);
-    SDL_RenderCopy(renderer, splash, &splashRect, &splashRect);
-    SDL_RenderPresent(renderer);
+    compositor->displaySplash();
 }
 
 void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL, TTF_Font *font) {
-    //renderer and target
     renderer = rendererSDL;
-    rendererTarget = SDL_GetRenderTarget(renderer);
 
-    displaySplash();
-
-    // init island
-    islandNight = std::rand() % 2;
-    islandLarge = std::rand() % 2;
-    islandPos = NO_ISLAND;
-    islandTrunk = { ISLAND_TEMP_X, ISLAND_TEMP_Y };
-
-    // random pick ocean (0-2)
-    oceanRect = { 0, 0, 0, 0 };
-    u8 random = std::rand() % 3;
-    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
-
-    // load SCR files
-    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
-    oceanNightTexture = static_cast<SCRFile *>(res->getResource("NIGHT.SCR"))->getImage(renderer, oceanRect);
-
-    // load BMP files
-    backgroundBMP = static_cast<BMPFile *>(res->getResource("BACKGRND.BMP"));
-    raftBMP = static_cast<BMPFile *>(res->getResource("MRAFT.BMP"));
-    holidayBMP = static_cast<BMPFile *>(res->getResource("HOLIDAY.BMP"));
-
-    scrTexture = NULL;
-
-    // many rects
-    fullRect = {  0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-
-    // width/heigth gets filled in on load
-    screenRect = { 0, 0, 0, 0 };
-
-    // create background and foreground texture
-    // better pixel format?
-    bgTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, fullRect.w, fullRect.h);
-    fgTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, fullRect.w, fullRect.h);
-    saveTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, fullRect.w, fullRect.h);
-    SDL_SetTextureBlendMode(fgTexture, SDL_BLENDMODE_BLEND);
-    SDL_SetTextureBlendMode(saveTexture, SDL_BLENDMODE_BLEND);
+    compositor = new RobinsonCompositor(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, res);
 
     menu = new RobinsonMenu(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
     menu->initMenu(res->getMovieList(), font);
@@ -211,146 +156,21 @@ bool SCRANTIC::Robinson::navigateMenu(SDL_Keycode key) {
     return false;
 }
 
-void SCRANTIC::Robinson::renderBackgroundAtPos(u16 num, i32 x, i32 y, bool raft, bool holiday) {
-    SDL_Rect src, dest;
-    SDL_Texture *bkg;
-    if (!raft && !holiday) {
-        bkg = backgroundBMP->getImage(renderer, num, src);
-    } else if (raft) {
-        bkg = raftBMP->getImage(renderer, num, src);
-    } else {
-        bkg = holidayBMP->getImage(renderer, num, src);
-    }
-
-    dest.x = x;
-    dest.y = y;
-    dest.w = src.w;
-    dest.h = src.h;
-    SDL_RenderCopy(renderer, bkg, &src, &dest);
-}
-
-void SCRANTIC::Robinson::animateBackground() {
-    if (!islandPos) {
-        return;
-    }
-
-    if (islandLarge) {
-        renderBackgroundAtPos((SPRITE_WAVE_L_LEFT + animationCycle/12), WAVE_L_LEFT_X + islandTrunk.x, WAVE_L_LEFT_Y + islandTrunk.y);
-        renderBackgroundAtPos((SPRITE_WAVE_L_MID + ((animationCycle/12 + 1) % 3)), WAVE_L_MID_X + islandTrunk.x, WAVE_L_MID_Y + islandTrunk.y);
-        renderBackgroundAtPos((SPRITE_WAVE_L_RIGHT + ((animationCycle/12 + 2) % 3)), WAVE_L_RIGHT_X + islandTrunk.x, WAVE_L_RIGHT_Y + islandTrunk.y);
-        renderBackgroundAtPos((SPRITE_WAVE_STONE + animationCycle/12), WAVE_STONE_X + islandTrunk.x, WAVE_STONE_Y + islandTrunk.y);
-    } else {
-        renderBackgroundAtPos((SPRITE_WAVE_LEFT + animationCycle/12), WAVE_LEFT_X + islandTrunk.x, WAVE_LEFT_Y + islandTrunk.y);
-        renderBackgroundAtPos((SPRITE_WAVE_MID + ((animationCycle/12 + 1) % 3)), WAVE_MID_X + islandTrunk.x, WAVE_MID_Y + islandTrunk.y);
-        renderBackgroundAtPos((SPRITE_WAVE_RIGHT + ((animationCycle/12 + 2) % 3)), WAVE_RIGHT_X + islandTrunk.x, WAVE_RIGHT_Y + islandTrunk.y);
-    }
-
-    //weather is missing
-
-    ++animationCycle;
-    if (animationCycle >= 36) {
-        animationCycle = 0;
-    }
-}
 
 void SCRANTIC::Robinson::render() {
-    SDL_Rect tmpRect;
-    u8 save;
-
-    // first render background
-    SDL_SetRenderTarget(renderer, bgTexture);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
-    if (islandPos > 0) {
-        if (islandNight) {
-            SDL_RenderCopy(renderer, oceanNightTexture, &oceanRect, &oceanRect);
-        } else {
-            SDL_RenderCopy(renderer, oceanTexture, &oceanRect, &oceanRect);
-        }
-
-        if (islandLarge) {
-            renderBackgroundAtPos(SPRITE_L_ISLAND, L_ISLAND_X + islandTrunk.x, L_ISLAND_Y + islandTrunk.y);
-            renderBackgroundAtPos(SPRITE_STONE, STONE_X + islandTrunk.x, STONE_Y + islandTrunk.y);
-        }
-
-        renderBackgroundAtPos(SPRITE_ISLAND, ISLAND_X + islandTrunk.x, ISLAND_Y + islandTrunk.y);
-        renderBackgroundAtPos(SPRITE_TOP_SHADOW, TOP_SHADOW_X + islandTrunk.x, TOP_SHADOW_Y + islandTrunk.y);
-        renderBackgroundAtPos(SPRITE_TRUNK, islandTrunk.x, islandTrunk.y);
-        renderBackgroundAtPos(SPRITE_TOP, TOP_X + islandTrunk.x, TOP_Y + islandTrunk.y);
-        renderBackgroundAtPos(0, RAFT_X + islandTrunk.x, RAFT_Y + islandTrunk.y, true);
-
-        animateBackground();
-    } else {
-        if (scrTexture != NULL) {
-            SDL_RenderCopy(renderer, scrTexture, &screenRect, &screenRect);
-        }
-    }
-
-    // saved image
-    SDL_SetRenderTarget(renderer, saveTexture);
-    for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
-        save = (*it)->needsSave();
-        if (save) {
-            if (save == 2) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-                SDL_RenderClear(renderer);
-            }
-            SDL_RenderCopy(renderer, (*it)->savedImage, &fullRect, &fullRect);
-        }
-
-        //pre render foreground
-        (*it)->renderForeground();
-    }
-    // background end
-
-    // render everything to screen
-    SDL_SetRenderTarget(renderer, rendererTarget);
-    SDL_RenderClear(renderer);
-
-    SDL_RenderCopy(renderer, bgTexture, &fullRect, &fullRect);
-    SDL_RenderCopy(renderer, saveTexture, &fullRect, &fullRect);
-
-    std::string scrName;
-    i16 audio;
+    compositor->render(ttmScenes.begin(), ttmScenes.end());
 
     for (auto it = ttmScenes.begin(); it != ttmScenes.end(); ++it) {
-        if ((*it)->isClipped()) {
-            tmpRect = (*it)->getClipRect();
-            SDL_RenderCopy(renderer, (*it)->fg, &tmpRect, &tmpRect);
-        } else {
-            SDL_RenderCopy(renderer, (*it)->fg, &fullRect, &fullRect);
-        }
-
-        audio = (*it)->getSample();
+        i16 audio = (*it)->getSample();
         if (audio != -1) {
             audioPlayer->play(audio);
-        }
-
-        scrName = (*it)->getSCRName();
-        if (scrName != "") {
-            //std::string scrName = (*it)->getSCRName();
-            scrTexture = static_cast<SCRFile *>(res->getResource(scrName))->getImage(renderer, screenRect);
-            if (scrName == "ISLETEMP.SCR") {
-                islandPos = ISLAND_RIGHT;
-                islandTrunk.x = ISLAND_TEMP_X;
-                islandTrunk.y = ISLAND_TEMP_Y;
-            } else if (scrName == "ISLAND2.SCR") {
-                islandPos = ISLAND_LEFT;
-                islandTrunk.x = ISLAND2_X;
-                islandTrunk.y = ISLAND2_Y;
-            } else {
-                islandPos = NO_ISLAND;
-            }
-
-            screenRect.x = 0;
-            screenRect.y = 0;
         }
     }
 
     if (renderMenu) {
         menu->render();
     }
+
 }
 
 void SCRANTIC::Robinson::resetPlayer() {
@@ -360,15 +180,7 @@ void SCRANTIC::Robinson::resetPlayer() {
 
     ttmScenes.clear();
 
-    islandNight = std::rand() % 2;
-    u8 random = std::rand() % 3;
-    std::string ocean = "OCEAN0"+std::to_string(random)+".SCR";
-    oceanTexture = static_cast<SCRFile *>(res->getResource(ocean))->getImage(renderer, oceanRect);
-    islandLarge = std::rand() % 2;
-
-    scrTexture = NULL;
-    islandPos= NO_ISLAND;
-
+    compositor->reset();
 
     delay = 0;
     delayTicks = 0;
@@ -376,11 +188,6 @@ void SCRANTIC::Robinson::resetPlayer() {
     for (int i = 0; i < MAX_IMAGES; ++i) {
         images[i] = NULL;
     }
-
-    SDL_SetRenderTarget(renderer, saveTexture);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, rendererTarget);
 }
 
 void SCRANTIC::Robinson::addTTM(Command cmd) {
@@ -424,24 +231,9 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
         ttm->advanceScript();
         scrName = ttm->getSCRName();
         if (scrName != "") {
-            scrTexture = static_cast<SCRFile *>(res->getResource(scrName))->getImage(renderer, screenRect);
-            if (scrName == "ISLETEMP.SCR") {
-                islandPos = ISLAND_RIGHT;
-                islandTrunk.x = ISLAND_TEMP_X;
-                islandTrunk.y = ISLAND_TEMP_Y;
-            } else if (scrName == "ISLAND2.SCR") {
-                islandPos = ISLAND_LEFT;
-                islandTrunk.x = ISLAND2_X;
-                islandTrunk.y = ISLAND2_Y;
-            } else {
-                islandPos = NO_ISLAND;
-            }
-
-            screenRect.x = 0;
-            screenRect.y = 0;
+            compositor->setScreen(scrName);
         }
-    }
-    while (!ttm->isFinished());
+    } while (!ttm->isFinished());
 
     delete ttm;
 }
