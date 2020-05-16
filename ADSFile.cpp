@@ -591,7 +591,7 @@ int SCRANTIC::ADSFile::getParamCount(u16 opcode) {
         if (opcode <= 0x100) {
             return 1; // CMD_SET_SCENE
         }
-        std::cerr << "Unkown command found: " << opcode << std::endl;
+        std::cerr << "Unknown command found: " << opcode << std::endl;
         return 0;
     }
 }

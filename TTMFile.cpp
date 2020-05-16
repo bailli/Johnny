@@ -461,7 +461,7 @@ int SCRANTIC::TTMFile::getParamCount(u16 opcode) {
     case CMD_UNK_B600:
         return 6;
     default:
-        std::cerr << "Unkown command found: " << opcode << std::endl;
+        std::cerr << "Unknown command found: " << opcode << std::endl;
         return 0;
     }
 }
