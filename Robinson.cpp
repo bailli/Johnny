@@ -210,10 +210,6 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
         if (repeat) {
             --repeat;
         }
-
-        if (cmd.data.at(3) != 1) {
-            std::cout << adsFileName << ": TTM Movie with blob " << (i16)cmd.data.at(3) << " for " << ads->getResource(cmd.data.at(0)) << std::endl;
-        }
     }
 
     TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
@@ -423,7 +419,9 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
         case CMD_ADD_TTM: //TTM Scene ??? Repeat
             if (isRandom) {
-                randomBlock.push_back(cmd);
+                for (u16 j = 0; j < cmd.data.at(3); j++) {
+                    randomBlock.push_back(cmd);
+                }
             } else {
                 ttmsToAdd.push_back(cmd);
                 ttmsToAddHashes.push_back(SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1)));
