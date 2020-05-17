@@ -57,10 +57,10 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
     if (name == "MEANWHIL.TTM - quarky watch") {
         for (auto &c : script) {
             if (c.opcode == CMD_SEL_SLOT_IMG) {
-                c.data[0] = 5;
+                c.data[0] = 7;
             }
             if ((c.opcode == CMD_DRAW_SPRITE) || (c.opcode == CMD_DRAW_SPRITE_MIRROR)) {
-                c.data[3] = 5;
+                c.data[3] = 7;
             }
         }
     }
