@@ -66,7 +66,7 @@ SCRANTIC::ADSFile::ADSFile(const std::string &filename)
             }
             tag = line.substr(line.find(" ")+1);
             resList.insert({id, tag});
-        } if (mode == "TAGS") {
+        } else if (mode == "TAGS") {
             std::istringstream iss(line);
             if (!(iss >> std::hex >> id)) {
                 break;
@@ -257,48 +257,33 @@ size_t SCRANTIC::ADSFile::getMoviePosFromNumber(u16 number) {
 void SCRANTIC::ADSFile::findLabels() {
     u16 currentMovie;
     u16 currentHash = 0;
+    size_t playCount = 1;
 
     for (auto movieIt = script.begin(); movieIt != script.end(); ++movieIt) {
         currentMovie = movieIt->first;
+        playCount = 1;
         for (size_t pos = 0; pos < movieIt->second.size(); ++pos) {
             Command c = movieIt->second[pos];
             if (c.opcode == CMD_AFTER_SCENE) {
+                if (playCount != 0) {
+                    std::cout << "PlayCount mismatch!" << std::endl;
+                }
+                playCount = 1;
                 for (size_t i = 0; i < c.data.size(); i += 2) {
                     currentHash = makeHash(c.data.at(i), c.data.at(i+1));
                     labelsAfter[currentMovie][currentHash].push_back(pos);
                 }
-            } else if (c.opcode == CMD_ONLY_IF_PLAYED) {
-                if (movieIt->second[pos - 1].opcode == CMD_PLAY_MOVIE) {
-                    currentHash = makeHash(c.data.at(0), c.data.at(1));
-                    labelsTogether[currentMovie][currentHash].push_back(pos);
-                }
+            } else if (c.opcode == CMD_PLAY_MOVIE) {
+                playCount--;
+            } else if ((c.opcode == CMD_SKIP_IF_PLAYED) || (c.opcode == CMD_ONLY_IF_PLAYED)) {
+                playCount++;
+            } else if ((c.opcode == CMD_ONLY_IF_PLAYED) && (playCount == 0)) {
+                playCount = 1;
+                currentHash = makeHash(c.data.at(0), c.data.at(1));
+                labelsTogether[currentMovie][currentHash].push_back(pos);
             }
         }
     }
-}
-
-std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getInitialBlock(u16 movie) {
-    std::vector<Command> block;
-    size_t playCount = 1;
-
-    for (size_t pos = 1; pos < script[movie].size(); ++pos) {
-        Command c = script[movie][pos];
-        if ((c.opcode == CMD_SKIP_IF_PLAYED) || ((c.opcode == CMD_ONLY_IF_PLAYED) && (script[movie][pos-1].opcode == CMD_RANDOM_END))) {
-            playCount++;
-        }
-
-        if (c.opcode == CMD_PLAY_MOVIE) {
-            playCount--;
-        }
-
-        block.push_back(c);
-
-        if (playCount == 0) {
-            break;
-        }
-    }
-
-    return block;
 }
 
 size_t SCRANTIC::ADSFile::getLabelCountAfter(u16 movie, u16 hash) {
@@ -325,6 +310,30 @@ size_t SCRANTIC::ADSFile::getLabelCountTogether(u16 movie, u16 hash) {
     return labelsTogether[movie][hash].size();
 }
 
+std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getInitialBlock(u16 movie) {
+    std::vector<Command> block;
+    size_t playCount = 1;
+
+    for (size_t pos = 1; pos < script[movie].size(); ++pos) {
+        Command c = script[movie][pos];
+        if ((c.opcode == CMD_SKIP_IF_PLAYED) || (c.opcode == CMD_ONLY_IF_PLAYED)) {
+            playCount++;
+        }
+
+        if (c.opcode == CMD_PLAY_MOVIE) {
+            playCount--;
+        }
+
+        block.push_back(c);
+
+        if (playCount == 0) {
+            break;
+        }
+    }
+
+    return block;
+}
+
 std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getBlockAfterMovie(u16 movie, u16 hash, u16 num) {
     std::vector<Command> block;
 
@@ -337,7 +346,7 @@ std::vector<SCRANTIC::Command> SCRANTIC::ADSFile::getBlockAfterMovie(u16 movie, 
 
     for (; pos < script[movie].size(); ++pos) {
         Command c = script[movie][pos];
-        if ((c.opcode == CMD_SKIP_IF_PLAYED) || ((c.opcode == CMD_ONLY_IF_PLAYED) && (script[movie][pos-1].opcode == CMD_RANDOM_END))) {
+        if ((c.opcode == CMD_SKIP_IF_PLAYED) || (c.opcode == CMD_ONLY_IF_PLAYED)) {
             playCount++;
         }
 

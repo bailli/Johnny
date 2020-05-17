@@ -414,6 +414,12 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
                     skipToPlayMovie = false;
                     break;
                 }
+                for (auto scene : ttmScenes) {
+                    if (scene->getHash() == lastHash) {
+                        skipToPlayMovie = false;
+                        break;
+                    }
+                }
             }
             break;
 
