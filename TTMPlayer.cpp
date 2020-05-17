@@ -51,7 +51,19 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene
         scriptPos = script.begin();
     }
 
+
     name = ttm->filename + " - " + ttm->getTag(scene);
+
+    if (name == "MEANWHIL.TTM - quarky watch") {
+        for (auto &c : script) {
+            if (c.opcode == CMD_SEL_SLOT_IMG) {
+                c.data[0] = 5;
+            }
+            if ((c.opcode == CMD_DRAW_SPRITE) || (c.opcode == CMD_DRAW_SPRITE_MIRROR)) {
+                c.data[3] = 5;
+            }
+        }
+    }
 
     savedImage = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
     fg = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -406,3 +418,4 @@ u8 SCRANTIC::TTMPlayer::needsSave() {
         return SAVE_IMAGE;
     }
 }
+
