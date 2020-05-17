@@ -210,6 +210,10 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
         if (repeat) {
             --repeat;
         }
+    } else {
+        if (ads->getResource(cmd.data.at(0)) == "WOULDBE.TTM") {
+            sceneNum = 3;
+        }
     }
 
     TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
