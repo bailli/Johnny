@@ -98,7 +98,9 @@ void SCRANTIC::RobinsonCompositor::animateBackground() {
 }
 
 void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin, std::list<TTMPlayer *>::iterator end) {
-    SDL_Rect tmpRect;
+    SDL_Rect targetRect;
+    SDL_Rect clipRectSrc;
+    SDL_Rect clipRectDst;
     u8 save;
     std::string scrName;
 
@@ -160,7 +162,7 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
 
     int x = absoluteIslandTrunkPos.x != 0 ? absoluteIslandTrunkPos.x - islandTrunk.x : 0;
     int y = absoluteIslandTrunkPos.y != 0 ? absoluteIslandTrunkPos.y - islandTrunk.y : 0;
-    SDL_Rect targetRect = { x, y, width, height};
+    targetRect = { x, y, width, height};
 
     SDL_RenderCopy(renderer, oceanTexture, &fullScreenRect, &fullScreenRect);
     SDL_RenderCopy(renderer, bgTexture, &fullScreenRect, &targetRect);
@@ -168,8 +170,9 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
 
     for (auto it = begin; it != end; ++it) {
         if ((*it)->isClipped()) {
-            tmpRect = (*it)->getClipRect();
-            SDL_RenderCopy(renderer, (*it)->fg, &tmpRect, &tmpRect);
+            clipRectSrc = (*it)->getClipRect();
+            clipRectDst = { clipRectSrc.x + x, clipRectSrc.y + y, clipRectSrc.w, clipRectSrc.h };
+            SDL_RenderCopy(renderer, (*it)->fg, &clipRectSrc, &clipRectDst);
         } else {
             SDL_RenderCopy(renderer, (*it)->fg, &fullScreenRect, &targetRect);
         }
