@@ -10,6 +10,7 @@ SCRANTIC::RobinsonCompositor::RobinsonCompositor(SDL_Renderer* renderer, int wid
     animationCycle(0),
     islandPos(NO_ISLAND),
     islandTrunk({ ISLAND_TEMP_X, ISLAND_TEMP_Y }),
+    absoluteIslandTrunkPos({ 0, 0 }),
     isNight(false),
     isLargeIsland(false),
     screenSCR(NULL) {
@@ -34,14 +35,17 @@ SCRANTIC::RobinsonCompositor::RobinsonCompositor(SDL_Renderer* renderer, int wid
 
     // create background and foreground texture
     // better pixel format?
+    oceanTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
     bgTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
     fgTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
     saveTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, width, height);
+    SDL_SetTextureBlendMode(bgTexture, SDL_BLENDMODE_BLEND);
     SDL_SetTextureBlendMode(fgTexture, SDL_BLENDMODE_BLEND);
     SDL_SetTextureBlendMode(saveTexture, SDL_BLENDMODE_BLEND);
 }
 
 SCRANTIC::RobinsonCompositor::~RobinsonCompositor() {
+    SDL_DestroyTexture(oceanTexture);
     SDL_DestroyTexture(bgTexture);
     SDL_DestroyTexture(fgTexture);
     SDL_DestroyTexture(saveTexture);
@@ -100,6 +104,10 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
 
     // first render background
     SDL_SetRenderTarget(renderer, bgTexture);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    SDL_SetRenderTarget(renderer, oceanTexture);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
@@ -110,6 +118,7 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
             renderFullScreenSCR(oceanSCR);
         }
 
+        SDL_SetRenderTarget(renderer, bgTexture);
         if (isLargeIsland) {
             renderSpriteNumAtPos(backgroundBMP, SPRITE_L_ISLAND, L_ISLAND_X + islandTrunk.x, L_ISLAND_Y + islandTrunk.y);
             renderSpriteNumAtPos(backgroundBMP, SPRITE_STONE, STONE_X + islandTrunk.x, STONE_Y + islandTrunk.y);
@@ -149,15 +158,20 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
     SDL_SetRenderTarget(renderer, rendererTarget);
     SDL_RenderClear(renderer);
 
-    SDL_RenderCopy(renderer, bgTexture, &fullScreenRect, &fullScreenRect);
-    SDL_RenderCopy(renderer, saveTexture, &fullScreenRect, &fullScreenRect);
+    int x = absoluteIslandTrunkPos.x != 0 ? absoluteIslandTrunkPos.x - islandTrunk.x : 0;
+    int y = absoluteIslandTrunkPos.y != 0 ? absoluteIslandTrunkPos.y - islandTrunk.y : 0;
+    SDL_Rect targetRect = { x, y, width, height};
+
+    SDL_RenderCopy(renderer, oceanTexture, &fullScreenRect, &fullScreenRect);
+    SDL_RenderCopy(renderer, bgTexture, &fullScreenRect, &targetRect);
+    SDL_RenderCopy(renderer, saveTexture, &fullScreenRect, &targetRect);
 
     for (auto it = begin; it != end; ++it) {
         if ((*it)->isClipped()) {
             tmpRect = (*it)->getClipRect();
             SDL_RenderCopy(renderer, (*it)->fg, &tmpRect, &tmpRect);
         } else {
-            SDL_RenderCopy(renderer, (*it)->fg, &fullScreenRect, &fullScreenRect);
+            SDL_RenderCopy(renderer, (*it)->fg, &fullScreenRect, &targetRect);
         }
 
         scrName = (*it)->getSCRName();
@@ -170,6 +184,8 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
 void SCRANTIC::RobinsonCompositor::reset() {
     islandPos = NO_ISLAND;
     screenSCR = NULL;
+
+    absoluteIslandTrunkPos = { 0, 0 };
 
     SDL_SetRenderTarget(renderer, saveTexture);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);

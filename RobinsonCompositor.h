@@ -42,7 +42,9 @@ private:
     i8 animationCycle;
     i8 islandPos;
     SDL_Point islandTrunk;
+    SDL_Point absoluteIslandTrunkPos;
 
+    SDL_Texture *oceanTexture;
     SDL_Texture *bgTexture;
     SDL_Texture *fgTexture;
     SDL_Texture *saveTexture;
@@ -68,6 +70,7 @@ public:
     void setNight(bool night) { isNight = night; }
     void setOcean(int num) { oceanSCR = oceanSCRList[num]; }
     void setLargeIsland(bool large) { isLargeIsland = large; }
+    void setAbsoluteIslandPos(SDL_Point *pos) { absoluteIslandTrunkPos = *pos; }
 
     bool getNight() { return isNight; }
     bool getLargeIsland() { return isLargeIsland; }
