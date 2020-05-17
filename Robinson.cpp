@@ -291,8 +291,12 @@ bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
     movieFirstRun = true;
     movieLastRun = false;
     lastHashes.clear();
+    killedHashes.clear();
 
     resetPlayer();
+
+    //SDL_Point pos = { ISLAND_TEMP_X, ISLAND_TEMP_Y };
+    //compositor->setAbsoluteIslandPos(&pos);
 
     return true;
 }
@@ -463,6 +467,7 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
         case CMD_KILL_TTM:
             lastHash = SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1));
+            killedHashes.push_back(lastHash);
             found = false;
             for (auto scene : ttmScenes) {
                 if (lastHash == scene->getHash()) {
@@ -474,6 +479,14 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
             if (!found) {
                 std::cout << "ADS Command: Kill movie not found ! " << (u16)cmd.data.at(0) << " " << cmd.data.at(1) << std::endl;
+            }
+            break;
+
+        case CMD_UNK_LABEL:
+            lastHash = SCRANTIC::ADSFile::makeHash(cmd.data.at(0), cmd.data.at(1));
+            if (std::find(killedHashes.begin(), killedHashes.end(), lastHash) != killedHashes.end()) {
+                skipToPlayMovie = true;
+                break;
             }
             break;
 
@@ -492,6 +505,7 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
         case CMD_END_SCRIPT:
             movieLastRun = true;
+            killedHashes.clear();
             break;
 
         default:

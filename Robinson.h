@@ -46,6 +46,7 @@ private:
     std::list<TTMPlayer *> ttmScenes;
     std::list<std::pair<u16, bool>> movieQueue;
     std::list<u16> lastHashes;
+    std::list<u16> killedHashes;
 
     BMPFile *images[MAX_IMAGES];
 
