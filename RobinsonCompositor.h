@@ -57,6 +57,7 @@ private:
     void renderSpriteNumAtPos(BMPFile *bmp, u16 num, i32 x, i32 y);
     void renderFullScreenSCR(SCRFile *scr);
     void animateBackground();
+    void shiftRect(SDL_Rect *rect, int x, int y);
 
 public:
     RobinsonCompositor(SDL_Renderer* renderer, int width, int height, RESFile *resources);

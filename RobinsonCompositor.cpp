@@ -77,16 +77,18 @@ void SCRANTIC::RobinsonCompositor::animateBackground() {
     }
 
     i8 spriteOffset = animationCycle/12;
+    int trunkX = absoluteIslandTrunkPos.x != 0 ? absoluteIslandTrunkPos.x : islandTrunk.x;
+    int trunkY = absoluteIslandTrunkPos.y != 0 ? absoluteIslandTrunkPos.y : islandTrunk.y;
 
     if (isLargeIsland) {
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_L_LEFT + spriteOffset), WAVE_L_LEFT_X + islandTrunk.x, WAVE_L_LEFT_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_L_MID + ((spriteOffset + 1) % 3)), WAVE_L_MID_X + islandTrunk.x, WAVE_L_MID_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_L_RIGHT + ((spriteOffset + 2) % 3)), WAVE_L_RIGHT_X + islandTrunk.x, WAVE_L_RIGHT_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_STONE + spriteOffset), WAVE_STONE_X + islandTrunk.x, WAVE_STONE_Y + islandTrunk.y);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_L_LEFT + spriteOffset), WAVE_L_LEFT_X + trunkX, WAVE_L_LEFT_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_L_MID + ((spriteOffset + 1) % 3)), WAVE_L_MID_X + trunkX, WAVE_L_MID_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_L_RIGHT + ((spriteOffset + 2) % 3)), WAVE_L_RIGHT_X + trunkX, WAVE_L_RIGHT_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_STONE + spriteOffset), WAVE_STONE_X + trunkX, WAVE_STONE_Y + trunkY);
     } else {
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_LEFT + spriteOffset), WAVE_LEFT_X + islandTrunk.x, WAVE_LEFT_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_MID + ((spriteOffset + 1) % 3)), WAVE_MID_X + islandTrunk.x, WAVE_MID_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_RIGHT + ((spriteOffset + 2) % 3)), WAVE_RIGHT_X + islandTrunk.x, WAVE_RIGHT_Y + islandTrunk.y);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_LEFT + spriteOffset), WAVE_LEFT_X + trunkX, WAVE_LEFT_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_MID + ((spriteOffset + 1) % 3)), WAVE_MID_X + trunkX, WAVE_MID_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, (SPRITE_WAVE_RIGHT + ((spriteOffset + 2) % 3)), WAVE_RIGHT_X + trunkX, WAVE_RIGHT_Y + trunkY);
     }
 
     //weather is missing
@@ -98,12 +100,6 @@ void SCRANTIC::RobinsonCompositor::animateBackground() {
 }
 
 void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin, std::list<TTMPlayer *>::iterator end) {
-    SDL_Rect targetRect;
-    SDL_Rect clipRectSrc;
-    SDL_Rect clipRectDst;
-    u8 save;
-    std::string scrName;
-
     // first render background
     SDL_SetRenderTarget(renderer, bgTexture);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
@@ -120,17 +116,20 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
             renderFullScreenSCR(oceanSCR);
         }
 
+        int trunkX = absoluteIslandTrunkPos.x != 0 ? absoluteIslandTrunkPos.x : islandTrunk.x;
+        int trunkY = absoluteIslandTrunkPos.y != 0 ? absoluteIslandTrunkPos.y : islandTrunk.y;
+
         SDL_SetRenderTarget(renderer, bgTexture);
         if (isLargeIsland) {
-            renderSpriteNumAtPos(backgroundBMP, SPRITE_L_ISLAND, L_ISLAND_X + islandTrunk.x, L_ISLAND_Y + islandTrunk.y);
-            renderSpriteNumAtPos(backgroundBMP, SPRITE_STONE, STONE_X + islandTrunk.x, STONE_Y + islandTrunk.y);
+            renderSpriteNumAtPos(backgroundBMP, SPRITE_L_ISLAND, L_ISLAND_X + trunkX, L_ISLAND_Y + trunkY);
+            renderSpriteNumAtPos(backgroundBMP, SPRITE_STONE, STONE_X + trunkX, STONE_Y + trunkY);
         }
 
-        renderSpriteNumAtPos(backgroundBMP, SPRITE_ISLAND, ISLAND_X + islandTrunk.x, ISLAND_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, SPRITE_TOP_SHADOW, TOP_SHADOW_X + islandTrunk.x, TOP_SHADOW_Y + islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, SPRITE_TRUNK, islandTrunk.x, islandTrunk.y);
-        renderSpriteNumAtPos(backgroundBMP, SPRITE_TOP, TOP_X + islandTrunk.x, TOP_Y + islandTrunk.y);
-        renderSpriteNumAtPos(raftBMP, 0, RAFT_X + islandTrunk.x, RAFT_Y + islandTrunk.y);
+        renderSpriteNumAtPos(backgroundBMP, SPRITE_ISLAND, ISLAND_X + trunkX, ISLAND_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, SPRITE_TOP_SHADOW, TOP_SHADOW_X + trunkX, TOP_SHADOW_Y + trunkY);
+        renderSpriteNumAtPos(backgroundBMP, SPRITE_TRUNK, trunkX, trunkY);
+        renderSpriteNumAtPos(backgroundBMP, SPRITE_TOP, TOP_X + trunkX, TOP_Y + trunkY);
+        renderSpriteNumAtPos(raftBMP, 0, RAFT_X + trunkX, RAFT_Y + trunkY);
 
         animateBackground();
     } else {
@@ -138,6 +137,12 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
             renderFullScreenSCR(screenSCR);
         }
     }
+
+    int shiftX = absoluteIslandTrunkPos.x != 0 ? absoluteIslandTrunkPos.x - islandTrunk.x : 0;
+    int shiftY = absoluteIslandTrunkPos.y != 0 ? absoluteIslandTrunkPos.y - islandTrunk.y : 0;
+    SDL_Rect targetRect;
+    u8 save;
+    std::string scrName;
 
     // saved image
     SDL_SetRenderTarget(renderer, saveTexture);
@@ -152,7 +157,7 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
         }
 
         //pre render foreground
-        (*it)->renderForeground();
+        (*it)->renderForeground(shiftX, shiftY);
     }
     // background end
 
@@ -160,21 +165,20 @@ void SCRANTIC::RobinsonCompositor::render(std::list<TTMPlayer *>::iterator begin
     SDL_SetRenderTarget(renderer, rendererTarget);
     SDL_RenderClear(renderer);
 
-    int x = absoluteIslandTrunkPos.x != 0 ? absoluteIslandTrunkPos.x - islandTrunk.x : 0;
-    int y = absoluteIslandTrunkPos.y != 0 ? absoluteIslandTrunkPos.y - islandTrunk.y : 0;
-    targetRect = { x, y, width, height};
+    targetRect = { 0, 0, width, height};
+    shiftRect(&targetRect, shiftX, shiftY);
 
     SDL_RenderCopy(renderer, oceanTexture, &fullScreenRect, &fullScreenRect);
-    SDL_RenderCopy(renderer, bgTexture, &fullScreenRect, &targetRect);
-    SDL_RenderCopy(renderer, saveTexture, &fullScreenRect, &targetRect);
+    SDL_RenderCopy(renderer, bgTexture, &fullScreenRect, &fullScreenRect);
+    SDL_RenderCopy(renderer, saveTexture, &fullScreenRect, &fullScreenRect);
 
     for (auto it = begin; it != end; ++it) {
         if ((*it)->isClipped()) {
-            clipRectSrc = (*it)->getClipRect();
-            clipRectDst = { clipRectSrc.x + x, clipRectSrc.y + y, clipRectSrc.w, clipRectSrc.h };
-            SDL_RenderCopy(renderer, (*it)->fg, &clipRectSrc, &clipRectDst);
+            SDL_Rect clipRect = (*it)->getClipRect();
+            shiftRect(&clipRect, shiftX, shiftY);
+            SDL_RenderCopy(renderer, (*it)->fg, &clipRect, &clipRect);
         } else {
-            SDL_RenderCopy(renderer, (*it)->fg, &fullScreenRect, &targetRect);
+            SDL_RenderCopy(renderer, (*it)->fg, &fullScreenRect, &fullScreenRect);
         }
 
         scrName = (*it)->getSCRName();
@@ -211,3 +215,21 @@ void SCRANTIC::RobinsonCompositor::setScreen(const std::string &screen) {
     }
 }
 
+void SCRANTIC::RobinsonCompositor::shiftRect(SDL_Rect* rect, int x, int y) {
+    rect->x += x;
+    rect->y += y;
+    if (rect->x < 0) {
+        rect->w += rect->x;
+        rect->x = 0;
+    }
+    if (rect->y < 0) {
+        rect->h += rect->y;
+        rect->y = 0;
+    }
+    if (rect->x + rect->w > width) {
+        rect->w = width - rect->x;
+    }
+    if (rect->y + rect->h > height) {
+        rect->h = height - rect->y;
+    }
+}

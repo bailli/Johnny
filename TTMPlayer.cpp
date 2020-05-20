@@ -230,20 +230,20 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             break;
 
         case CMD_DRAW_PIXEL:
-            item.src.x = (i16)cmd.data.at(0);
-            item.src.y = (i16)cmd.data.at(1);
-            item.src.w = 2;
-            item.src.h = 2;
+            item.dest.x = (i16)cmd.data.at(0);
+            item.dest.y = (i16)cmd.data.at(1);
+            item.dest.w = 2;
+            item.dest.h = 2;
             item.color = currentColor;
             item.itemType = RENDERITEM_RECT;
             queuedItems.push_back(item);
             break;
 
         case CMD_DRAW_LINE:
-            item.src.x = (i16)cmd.data.at(0);
-            item.src.y = (i16)cmd.data.at(1);
-            item.src.w = (i16)cmd.data.at(2);
-            item.src.h = (i16)cmd.data.at(3);
+            item.dest.x = (i16)cmd.data.at(0);
+            item.dest.y = (i16)cmd.data.at(1);
+            item.dest.w = (i16)cmd.data.at(2);
+            item.dest.h = (i16)cmd.data.at(3);
             item.color = currentColor;
             item.itemType = RENDERITEM_LINE;
             queuedItems.push_back(item);
@@ -254,19 +254,19 @@ void SCRANTIC::TTMPlayer::advanceScript() {
             break;
 
         case CMD_DRAW_RECTANGLE:
-            item.src.x = (i16)cmd.data.at(0);
-            item.src.y = (i16)cmd.data.at(1);
-            item.src.w = cmd.data.at(2);
-            item.src.h = cmd.data.at(3);
+            item.dest.x = (i16)cmd.data.at(0);
+            item.dest.y = (i16)cmd.data.at(1);
+            item.dest.w = cmd.data.at(2);
+            item.dest.h = cmd.data.at(3);
             item.color = currentColor;
             item.itemType = RENDERITEM_RECT;
             queuedItems.push_back(item);
             break;
         case CMD_DRAW_ELLIPSE:
-            item.src.w = cmd.data.at(2)/2;
-            item.src.h = cmd.data.at(3)/2;
-            item.src.x = (i16)cmd.data.at(0) + item.src.w;
-            item.src.y = (i16)cmd.data.at(1) + item.src.h;
+            item.dest.w = cmd.data.at(2)/2;
+            item.dest.h = cmd.data.at(3)/2;
+            item.dest.x = (i16)cmd.data.at(0) + item.dest.w;
+            item.dest.y = (i16)cmd.data.at(1) + item.dest.h;
             item.color = currentColor;
             item.itemType = RENDERITEM_ELLIPSE;
             queuedItems.push_back(item);
@@ -351,40 +351,44 @@ void SCRANTIC::TTMPlayer::advanceScript() {
 }
 
 
-void SCRANTIC::TTMPlayer::renderForeground() {
+void SCRANTIC::TTMPlayer::renderForeground(i16 shiftX, i16 shiftY) {
     SDL_SetRenderTarget(renderer, fg);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
+    SDL_Rect target;
+
     Uint32 c1, c2;
 
-    for (auto item = items.begin(); item != items.end(); ++item) {
-        switch ((*item).itemType) {
+    for (auto item : items) {
+        switch (item.itemType) {
         case RENDERITEM_SPRITE:
-            SDL_RenderCopyEx(renderer, (*item).tex, &(*item).src, &(*item).dest, 0, NULL, (SDL_RendererFlip)(*item).flags);
+            target = { item.dest.x + shiftX, item.dest.y + shiftY, item.dest.w, item.dest.h };
+            SDL_RenderCopyEx(renderer, item.tex, &item.src, &target, 0, NULL, (SDL_RendererFlip)item.flags);
             break;
 
         case RENDERITEM_LINE:
             SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            SDL_RenderDrawLine(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h);
+            SDL_RenderDrawLine(renderer, item.dest.x + shiftX, item.dest.y + shiftY, item.dest.w + shiftX, item.dest.h + shiftY);
             break;
 
         case RENDERITEM_RECT:
-            SDL_SetRenderDrawColor(renderer, palette[(*item).color.first].r, palette[(*item).color.first].g, palette[(*item).color.first].b, 255);
-            SDL_RenderDrawRect(renderer, &(*item).src);
-            SDL_SetRenderDrawColor(renderer, palette[(*item).color.second].r, palette[(*item).color.second].g, palette[(*item).color.second].b, 255);
-            SDL_RenderFillRect(renderer, &(*item).src);
+            target = { item.dest.x + shiftX, item.dest.y + shiftY, item.dest.w, item.dest.h };
+            SDL_SetRenderDrawColor(renderer, palette[item.color.first].r, palette[item.color.first].g, palette[item.color.first].b, 255);
+            SDL_RenderDrawRect(renderer, &target);
+            SDL_SetRenderDrawColor(renderer, palette[item.color.second].r, palette[item.color.second].g, palette[item.color.second].b, 255);
+            SDL_RenderFillRect(renderer, &target);
             break;
 
         case RENDERITEM_ELLIPSE:
-            c1 = palette[(*item).color.first].r * 0x10000
-                 + palette[(*item).color.first].g * 0x100
-                 + palette[(*item).color.first].b + 0xFF000000;
-            c2 = palette[(*item).color.second].r * 0x10000
-                 + palette[(*item).color.second].g * 0x100
-                 + palette[(*item).color.second].b + 0xFF000000;
-            filledEllipseColor(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h, c2);
-            ellipseColor(renderer, (*item).src.x, (*item).src.y, (*item).src.w, (*item).src.h, c1);
+            c1 = palette[item.color.first].r * 0x10000
+                 + palette[item.color.first].g * 0x100
+                 + palette[item.color.first].b + 0xFF000000;
+            c2 = palette[item.color.second].r * 0x10000
+                 + palette[item.color.second].g * 0x100
+                 + palette[item.color.second].b + 0xFF000000;
+            filledEllipseColor(renderer, item.dest.x + shiftX, item.dest.y + shiftY, item.dest.w, item.dest.h, c2);
+            ellipseColor(renderer, item.dest.x + shiftX, item.dest.y + shiftY, item.dest.w, item.dest.h, c1);
             break;
 
         default:
@@ -398,10 +402,11 @@ void SCRANTIC::TTMPlayer::renderForeground() {
     // save foreground rect
     if (!alreadySaved) {
         if (saveImage) {
+            target = { saveRect.x + shiftX, saveRect.y + shiftY, saveRect.w, saveRect.h };
             SDL_SetRenderTarget(renderer, savedImage);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
             SDL_RenderClear(renderer);
-            SDL_RenderCopy(renderer, fg, &saveRect, &saveRect);
+            SDL_RenderCopy(renderer, fg, &saveRect, &target);
             alreadySaved = true;
         }
     }
@@ -418,4 +423,3 @@ u8 SCRANTIC::TTMPlayer::needsSave() {
         return SAVE_IMAGE;
     }
 }
-
