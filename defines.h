@@ -7,7 +7,7 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
 
-#define DELAY_MS 20
+#define DELAY_MS 18
 
 #define ISLAND_RIGHT 0x1
 #define ISLAND_LEFT  0x2
