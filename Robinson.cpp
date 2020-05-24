@@ -292,6 +292,7 @@ bool SCRANTIC::Robinson::loadMovie(const std::string &adsName, u16 num) {
     movieLastRun = false;
     lastHashes.clear();
     killedHashes.clear();
+    hashesNotKilled.clear();
 
     resetPlayer();
 
@@ -479,6 +480,7 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
             if (!found) {
                 std::cout << "ADS Command: Kill movie not found ! " << (u16)cmd.data.at(0) << " " << cmd.data.at(1) << std::endl;
+                hashesNotKilled.push_back(lastHash);
             }
             break;
 
@@ -506,6 +508,7 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
         case CMD_END_SCRIPT:
             movieLastRun = true;
             killedHashes.clear();
+            hashesNotKilled.clear();
             break;
 
         default:
@@ -519,8 +522,13 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
     }
 
     for (auto ttm : ttmsToAdd) {
-        addTTM(ttm);
         lastHash = SCRANTIC::ADSFile::makeHash(ttm.data.at(0), ttm.data.at(1));
+        auto notKilledIt = std::find(hashesNotKilled.begin(), hashesNotKilled.end(), lastHash);
+        if (notKilledIt != hashesNotKilled.end()) {
+            hashesNotKilled.erase(notKilledIt);
+            continue;
+        }
+        addTTM(ttm);
         size_t count = ads->getLabelCountTogether(movie, lastHash);
         for (size_t j = 0; j < count; ++j) {
             runADSBlock(true, movie, lastHash, j);
