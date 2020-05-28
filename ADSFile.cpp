@@ -266,7 +266,7 @@ void SCRANTIC::ADSFile::findLabels() {
             Command c = movieIt->second[pos];
             if (c.opcode == CMD_AFTER_SCENE) {
                 if (playCount != 0) {
-                    std::cout << "PlayCount mismatch!" << std::endl;
+                    std::cout << filename << ": PlayCount mismatch! Movie: " << currentMovie << " hash: " << currentHash << std::endl;
                 }
                 playCount = 1;
                 for (size_t i = 0; i < c.data.size(); i += 2) {
@@ -275,12 +275,12 @@ void SCRANTIC::ADSFile::findLabels() {
                 }
             } else if (c.opcode == CMD_PLAY_MOVIE) {
                 playCount--;
-            } else if ((c.opcode == CMD_SKIP_IF_PLAYED) || (c.opcode == CMD_ONLY_IF_PLAYED)) {
-                playCount++;
             } else if ((c.opcode == CMD_ONLY_IF_PLAYED) && (playCount == 0)) {
                 playCount = 1;
                 currentHash = makeHash(c.data.at(0), c.data.at(1));
                 labelsTogether[currentMovie][currentHash].push_back(pos);
+            } else if ((c.opcode == CMD_SKIP_IF_PLAYED) || (c.opcode == CMD_ONLY_IF_PLAYED)) {
+                playCount++;
             }
         }
     }
