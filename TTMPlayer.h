@@ -78,6 +78,8 @@ protected:
 
     std::string screen;
 
+    void init();
+
 public:
     u16 getDelay() { return delay; };
     u16 getRemainigDelay(u32 ticks);
@@ -99,6 +101,7 @@ public:
     void renderForeground(i16 shiftX = 0, i16 shiftY = 0);
 
     TTMPlayer(const std::string &ttmName, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
+    TTMPlayer(const std::string &ttmName, std::vector<Command> ttmScript, i16 repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
     ~TTMPlayer();
 };
 

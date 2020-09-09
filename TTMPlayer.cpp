@@ -35,23 +35,61 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 scene, i16 repeat
       savedImage(NULL),
       fg(NULL) {
 
+
+    ttm = static_cast<TTMFile *>(res->getResource(ttmName));
+
+    init();
+}
+
+SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, std::vector<Command> ttmScript, i16 repeatCount, SCRANTIC::RESFile* resFile, SCRANTIC::BMPFile ** BMPs, SDL_Color* pal, SDL_Renderer* rendererContext)
+    : sceneNo(0),
+      originalScene(0),
+      repeat(repeatCount),
+      delay(0),
+      remainingDelay(0),
+      waitCount(0),
+      waitDelay(0),
+      imgSlot(0),
+      audioSample(-1),
+      jumpToScript(-1),
+      renderer(rendererContext),
+      clipRegion(false),
+      alreadySaved(true),
+      saveNewImage(false),
+      palette(pal),
+      maxTicks(0),
+      selfDestruct(false),
+      selfDestructActive(false),
+      saveImage(false),
+      isDone(false),
+      toBeKilled(false),
+      images(BMPs),
+      res(resFile),
+      screen(""),
+      ttm(NULL),
+      savedImage(NULL),
+      fg(NULL),
+      script(ttmScript),
+      name(ttmName) {
+
+    scriptPos = script.begin();
+
+    init();
+}
+
+
+void SCRANTIC::TTMPlayer::init() {
     for (int i = 0; i < MAX_IMAGES; ++i) {
         oldImages[i] = images[i];
     }
 
-    ttm = static_cast<TTMFile *>(res->getResource(ttmName));
-
-    if (!ttm) {
-        return;
+    if (ttm) {
+        script = ttm->getFullScene(sceneNo);
+        if (script.size()) {
+            scriptPos = script.begin();
+        }
+        name = ttm->filename + " - " + ttm->getTag(sceneNo);
     }
-
-    script = ttm->getFullScene(scene);
-    if (script.size()) {
-        scriptPos = script.begin();
-    }
-
-
-    name = ttm->filename + " - " + ttm->getTag(scene);
 
     if (name == "MEANWHIL.TTM - quarky watch") {
         for (auto &c : script) {
@@ -76,8 +114,8 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 scene, i16 repeat
         repeat = 0;
         selfDestructActive = true;
     }
-
 }
+
 
 SCRANTIC::TTMPlayer::~TTMPlayer() {
     SDL_DestroyTexture(savedImage);
