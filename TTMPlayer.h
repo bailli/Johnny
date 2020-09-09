@@ -98,7 +98,7 @@ public:
     void advanceScript();
     void renderForeground(i16 shiftX = 0, i16 shiftY = 0);
 
-    TTMPlayer(const std::string &ttmName, u16 resNo, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
+    TTMPlayer(const std::string &ttmName, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **images, SDL_Color *pal, SDL_Renderer *rendererContext);
     ~TTMPlayer();
 };
 
