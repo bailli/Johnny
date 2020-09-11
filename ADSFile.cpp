@@ -257,11 +257,10 @@ size_t SCRANTIC::ADSFile::getMoviePosFromNumber(u16 number) {
 void SCRANTIC::ADSFile::findLabels() {
     u16 currentMovie;
     u16 currentHash = 0;
-    size_t playCount = 1;
 
     for (auto movieIt = script.begin(); movieIt != script.end(); ++movieIt) {
         currentMovie = movieIt->first;
-        playCount = 1;
+        size_t playCount = 1;
         for (size_t pos = 0; pos < movieIt->second.size(); ++pos) {
             Command c = movieIt->second[pos];
             if (c.opcode == CMD_AFTER_SCENE) {

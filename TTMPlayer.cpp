@@ -41,7 +41,7 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 scene, i16 repeat
     init();
 }
 
-SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, std::vector<Command> ttmScript, i16 repeatCount, SCRANTIC::RESFile* resFile, SCRANTIC::BMPFile ** BMPs, SDL_Color* pal, SDL_Renderer* rendererContext)
+SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, const std::vector<Command> &ttmScript, i16 repeatCount, SCRANTIC::RESFile* resFile, SCRANTIC::BMPFile ** BMPs, SDL_Color* pal, SDL_Renderer* rendererContext)
     : sceneNo(0),
       originalScene(0),
       repeat(repeatCount),
