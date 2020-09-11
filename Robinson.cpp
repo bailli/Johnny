@@ -30,6 +30,7 @@ SCRANTIC::Robinson::Robinson(const std::string &path, bool readUnpacked)
 
     res = new RESFile(path + "RESOURCE.MAP", readUnpacked);
     audioPlayer = new RIFFPlayer(path, readUnpacked);
+    johnnyWalker = new RobinsonWalker(path, readUnpacked);
 
     std::srand(std::time(0));
 

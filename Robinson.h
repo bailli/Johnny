@@ -10,6 +10,7 @@
 #include "RIFFPlayer.h"
 #include "RobinsonMenu.h"
 #include "RobinsonCompositor.h"
+#include "RobinsonWalker.h"
 
 #ifdef WIN32
 #include <SDL_ttf.h>
@@ -30,6 +31,7 @@ private:
     RIFFPlayer *audioPlayer;
     RobinsonMenu *menu;
     RobinsonCompositor *compositor;
+    RobinsonWalker *johnnyWalker;
 
     SDL_Renderer *renderer;
 
