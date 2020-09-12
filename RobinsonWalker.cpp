@@ -87,8 +87,33 @@ std::vector<SCRANTIC::Command> SCRANTIC::RobinsonWalker::getTurnFrames(i8 pos, i
     return commandList;
 }
 
+std::vector<SCRANTIC::Command> SCRANTIC::RobinsonWalker::getTransitionAndNextMovie(const std::string& adsName, u16 currentMovie, std::string &nextAds, u16 &nextMovie) {
+    i8 currentPos = movieData[adsName][currentMovie].endPos;
+    i8 nextPos = getRandomNextPos(currentPos);
+
+    // choose between wait, stand.ads or any movie ?
+    size_t choice = std::rand() % 3;
+
+    std::cout << "Choice " << choice << std::endl;
+
+    if (choice == 0) { // wait
+        //placeholder
+        getRandomNextMovieAtPos(currentPos, nextAds, nextMovie);
+    } else if (choice == 1) { // stand.ads
+        getRandomNextStandMovieAtPos(currentPos, nextAds, nextMovie);
+    } else {
+        getRandomNextMovieAtPos(currentPos, nextAds, nextMovie);
+    }
+
+    return getWalkScript(currentPos, movieData[adsName][currentMovie].endFacing, movieData[nextAds][nextMovie].startPos, movieData[nextAds][nextMovie].startFacing);
+}
+
 std::vector<SCRANTIC::Command> SCRANTIC::RobinsonWalker::getWalkScript(i8 startPos, i8 startFacing, i8 endPos, i8 endFacing) {
     std::vector<SCRANTIC::Command> commandList;
+
+    if (startPos == endPos) {
+        return getTurnFrames(startPos, startFacing, endFacing);
+    }
 
     i8 xFacing = walkerXtoYFace[startPos][endPos][0];
     std::vector<SCRANTIC::Command> turnList = getTurnFrames(startPos, startFacing, xFacing);
@@ -103,6 +128,50 @@ std::vector<SCRANTIC::Command> SCRANTIC::RobinsonWalker::getWalkScript(i8 startP
     commandList.insert(commandList.end(), turnList.begin(), turnList.end());
 
     return commandList;
+}
+
+bool SCRANTIC::RobinsonWalker::canContinueFromCurrentState(const std::string &adsName, u16 currentMovie) {
+    return (movieData[adsName][currentMovie].endPos != -1) && (movieData[adsName][currentMovie].endFacing != -1);
+}
+
+i8 SCRANTIC::RobinsonWalker::getRandomNextPos(i8 pos) {
+    std::vector<i8> positions;
+    for (int i = 0; i < WALKER_MAX_POS; ++i) {
+        if (walkerXtoYTags[pos][i] != -1) {
+            positions.push_back(walkerXtoYTags[pos][i]);
+        }
+    }
+
+    size_t choice = std::rand() % positions.size();
+    return positions[choice];
+}
+
+void SCRANTIC::RobinsonWalker::getRandomNextStandMovieAtPos(i8 pos, std::string& adsName, u16& movie) {
+    std::vector<u16> movies;
+    for (auto it = movieData["STAND.ADS"].begin(); it != movieData["STAND.ADS"].end(); ++it) {
+        if (it->second.startPos == pos) {
+            movies.push_back(it->first);
+        }
+    }
+
+    size_t choice = std::rand() % movies.size();
+    movie = movies[choice];
+    adsName = "STAND.ADS";
+}
+
+void SCRANTIC::RobinsonWalker::getRandomNextMovieAtPos(i8 pos, std::string& adsName, u16& movie) {
+    std::vector<std::pair<std::string, u16> > movies;
+    for (auto it = movieData.begin(); it != movieData.end(); ++it) {
+        for (auto adsIt = it->second.begin(); adsIt != it->second.end(); ++adsIt) {
+            if (adsIt->second.startPos == pos) {
+                movies.push_back({it->first, adsIt->first});
+            }
+        }
+    }
+
+    size_t choice = std::rand() % movies.size();
+    movie = std::get<1>(movies[choice]);
+    adsName = std::get<0>(movies[choice]);
 }
 
 i8 SCRANTIC::RobinsonWalker::getTurnTagNum(i8 pos) {

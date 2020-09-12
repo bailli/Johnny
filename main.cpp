@@ -163,7 +163,9 @@ int main(int argc, char **argv) {
 
     crusoe->initRenderer(g_Renderer, g_Font);
 
-    crusoe->loadMovie("VISITOR.ADS", 3);
+    crusoe->displaySplash();
+
+    crusoe->loadMovie("FISHING.ADS", 3);
     crusoe->startMovie();
 
     bool quit = false;

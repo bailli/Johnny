@@ -46,7 +46,7 @@ private:
     std::string adsFileName;
 
     std::list<TTMPlayer *> ttmScenes;
-    std::list<std::pair<u16, bool>> movieQueue;
+    std::list<std::tuple<u16, std::string, bool>> movieQueue;
     std::list<u16> lastHashes;
     std::list<u16> hashesNotKilled;
     std::list<u16> killedHashes;
@@ -80,6 +80,7 @@ public:
 
     bool loadMovie(const std::string &adsName, u16 num);
     void startMovie();
+    void selectNextMovie();
 
     u32 getCurrentDelay() { return delay; }
     void displayMenu(bool show) { renderMenu = show; }

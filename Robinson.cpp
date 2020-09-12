@@ -130,7 +130,7 @@ SCRANTIC::Robinson::~Robinson()
 }
 
 void SCRANTIC::Robinson::displaySplash() {
-    compositor->displaySplash();
+    //compositor->displaySplash();
 }
 
 void SCRANTIC::Robinson::initRenderer(SDL_Renderer *rendererSDL, TTF_Font *font) {
@@ -308,6 +308,25 @@ void SCRANTIC::Robinson::startMovie() {
     renderMenu = false;
 }
 
+void SCRANTIC::Robinson::selectNextMovie() {
+
+    if (!johnnyWalker->canContinueFromCurrentState(adsFileName, currentMovie)) {
+        std::cout << "Cannot continue from current State" << std::endl;
+        return;
+    }
+
+    std::string nextAds;
+    u16 nextMovie;
+    std::vector<Command> transitionScript = johnnyWalker->getTransitionAndNextMovie(adsFileName, currentMovie, nextAds, nextMovie);
+
+    TTMPlayer *ttm = new TTMPlayer("JOHNWALK.TTM", transitionScript, 0, res, images, palette, renderer);
+    ttmScenes.push_back(ttm);
+
+    movieQueue.push_back({nextMovie, nextAds, false});
+    advanceScripts();
+}
+
+
 void SCRANTIC::Robinson::advanceScripts() {
     if (!movieRunning) {
         return;
@@ -340,13 +359,26 @@ void SCRANTIC::Robinson::advanceScripts() {
     std::cout << adsFileName << ": Finished ADS Movie: " << currentMovie << std::endl;
 
     if (movieQueue.empty()) {
-        movieRunning = false;
+        //movieRunning = false;
+        //return;
+        selectNextMovie();
+        if (movieQueue.empty()) {
+            movieRunning = false;
+        }
         return;
     }
 
-    std::pair<u16, bool> nextItem = *movieQueue.begin();
-    bool skipToPlayAds = nextItem.second;
-    currentMovie = nextItem.first;
+    std::tuple<u16, std::string, bool> nextItem = *movieQueue.begin();
+    bool skipToPlayAds = std::get<2>(nextItem);
+    adsFileName = std::get<1>(nextItem);
+    currentMovie = std::get<0>(nextItem);
+
+    ads = static_cast<ADSFile *>(res->getResource(adsFileName));
+    menu->setMenuPostion(adsFileName, ads->getMoviePosFromNumber(currentMovie));
+    movieFirstRun = !skipToPlayAds;
+    movieLastRun = false;
+
+    std::cout << "Playing ADS movie " << ads->tagList[currentMovie] << std::endl;
 
     movieQueue.erase(movieQueue.begin());
 
@@ -495,8 +527,8 @@ void SCRANTIC::Robinson::runADSBlock(bool togetherWith, u16 movie, u16 hash, u16
 
         case CMD_PLAY_ADS_MOVIE:
             if (currentMovie != cmd.data.at(0)) {
-                movieQueue.push_front(std::make_pair(currentMovie, true));
-                movieQueue.push_front(std::make_pair(cmd.data.at(0), false));
+                movieQueue.push_front({currentMovie, adsFileName, true});
+                movieQueue.push_front({cmd.data.at(0), adsFileName, false});
                 movieLastRun = true;
                 return;
             }
