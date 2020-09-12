@@ -6,8 +6,9 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #endif
 
-SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
-    : sceneNo(scene),
+SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 resNum, u16 scene, i16 repeatCount, RESFile *resFile, BMPFile **BMPs, SDL_Color *pal, SDL_Renderer *rendererContext)
+    : resNo(resNum),
+      sceneNo(scene),
       originalScene(scene),
       repeat(repeatCount),
       delay(0),
@@ -42,7 +43,8 @@ SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, u16 scene, i16 repeat
 }
 
 SCRANTIC::TTMPlayer::TTMPlayer(const std::string &ttmName, const std::vector<Command> &ttmScript, i16 repeatCount, SCRANTIC::RESFile* resFile, SCRANTIC::BMPFile ** BMPs, SDL_Color* pal, SDL_Renderer* rendererContext)
-    : sceneNo(0),
+    : resNo(0xff),
+      sceneNo(0),
       originalScene(0),
       repeat(repeatCount),
       delay(0),

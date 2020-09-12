@@ -217,7 +217,7 @@ void SCRANTIC::Robinson::addTTM(Command cmd) {
         }
     }
 
-    TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), sceneNum, repeat, res, images, palette, renderer);
+    TTMPlayer *ttm = new TTMPlayer(ads->getResource(cmd.data.at(0)), cmd.data.at(0), sceneNum, repeat, res, images, palette, renderer);
 
     if (cmd.opcode != CMD_ADD_INIT_TTM) {
         ttmScenes.push_back(ttm);
